@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Timeflux</title>
+    <link rel="stylesheet" href="/css/bulma.min.css">
+    <link rel="stylesheet" href="/css/ui.css">
+  </head>
+  <body>
+    <div id="app">
+
+      <!-- Header -->
+      <nav class="navbar is-fixed-top is-dark">
+        <div class="navbar-brand">
+          <a class="navbar-item" href="https://timeflux.io">
+            <span><i class="fas fa-lg fa-signature"></i></span>&nbsp;<strong>Timeflux UI</strong>
+          </a>
+        </div>
+        <div class="navbar-menu">
+          <div class="navbar-end">
+            <p class="navbar-item ">
+              v0.1
+            </p>
+            <p class="navbar-item ">
+              <span class="icon" v-bind:class="[connected ? 'has-text-success' : 'has-text-danger']">
+                <i class="fas fa-lg fa-power-off"></i>
+              </span>
+            </p>
+          </div>
+        </div>
+      </nav>
+
+      <section id="main" ref="main">
+
+        <div class="columns" id="controller" ref="controller">
+
+          <!-- Streams -->
+          <div class="column">
+            <div class="panel" id="streams">
+              <p class="panel-heading">Streams</p>
+              <div class="panel-block">
+                <div class="field is-grouped">
+                  <div class="control">
+                    <div class="select">
+                      <select v-model="selected_stream">
+                        <option v-for="(value, key) in streams" v-bind:value="key">
+                          {{ key }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <div class="select">
+                      <select :disabled="!selected_stream" v-model="selected_channel">
+                        <optgroup label="All channels">
+                          <option value='all_combine'>Combine</option>
+                          <option value='all_append'>Append</option>
+                        </optgroup>
+                        <optgroup label="Single channel">
+                          <option v-for="stream in streams[selected_stream]" v-bind:value="stream">
+                            {{ stream }}
+                          </option>
+                        </optgroup>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <button class="button is-info" :disabled="selected_channel === undefined" v-on:click="add_chart">
+                      Display
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Events -->
+          <div class="column" id="events">
+            <div class="panel">
+              <p class="panel-heading">Events</p>
+              <div class="panel-block">
+                <div class="field is-grouped">
+                  <div class="control">
+                    <div class="select">
+                      <select v-model="selected_event">
+                        <option v-for="event in events" v-bind:value="event">
+                          {{ event }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <input class="input" type="text">
+                  </div>
+                  <div class="control">
+                    <button class="button is-info">
+                      Send
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+    <template id="chart-template">
+      <div class="columns">
+        <div class="column">
+          <div class="panel chart">
+            <div class="panel-heading">
+              {{ title }}
+              <button v-on:click="remove_chart" class="button is-icon is-dark is-outlined is-rounded is-small is-pulled-right">
+                <span class="icon"><i class="fa fa-times"></i></span>
+              </button>
+              <button v-on:click="toggle = !toggle" class="button is-icon is-dark is-outlined is-rounded is-small is-pulled-right">
+                <span class="icon"><i class="fa fa-wrench"></i></span>
+              </button>
+            </div>
+            <div v-show="toggle" class="panel-block chart-settings">[Settings]</div>
+            <div class="panel-block chart-series">
+              <div>
+                <div v-for="id in ids">
+                  <canvas :id="id" :style="{width: '100%', height: height + 'px'}"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <script src="/js/vue.js"></script>
+    <script src="/js/fa.js"></script>
+    <script src="/js/socket.io.js"></script>
+    <script src="/js/smoothie.js"></script>
+    <script src="/js/ui.js"></script>
+  </body>
+</html>

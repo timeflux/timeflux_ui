@@ -1,0 +1,21 @@
+#main {
+    padding: 1.5rem;
+}
+
+.chart-series {
+    padding: 0;
+    line-height: 0;
+    padding: 0;
+ }
+.chart-series > div {
+    width: 100%;
+ }
+ .chart-series > div > div:not(:first-child) {
+    border-top: #dbdbdb solid 1px;
+}
+
+.button.is-rounded.is-icon {
+    margin-left: .375rem;
+    padding-left: .75em;
+    padding-right: .75em;
+}

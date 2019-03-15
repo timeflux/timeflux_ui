@@ -12,7 +12,6 @@ with open('timeflux_ui/__init__.py') as f:
 setup(
     name='Timeflux UI',
     packages=find_packages(),
-    include_package_data=True,
     version=VERSION,
     description='Timeflux monitoring web interface.',
     long_description=DESCRIPTION,

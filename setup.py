@@ -10,7 +10,6 @@ with open('timeflux_ui/__init__.py') as f:
     VERSION = re.search('^__version__\s*=\s*\'(.*)\'', f.read(), re.M).group(1)
 
 DEPENDENCIES = [
-    'git+https://github.com/timeflux/timeflux',
     'aiohttp',
     'python-socketio'
 ]
@@ -25,5 +24,8 @@ setup(
     author='Pierre Clisson',
     author_email='contact@timeflux.io',
     url='https://timeflux.io',
-    install_requires=DEPENDENCIES
+    install_requires=DEPENDENCIES,
+    dependency_links=[
+        'git+https://github.com/timeflux/timeflux'
+    ]
 )

@@ -1,15 +1,12 @@
 import logging
 import os
+import numpy as np
+import pandas as pd
 import asyncio
 import socketio
 from aiohttp import web
 from threading import Thread, Lock
-
 from timeflux.core.node import Node
-
-import numpy as np
-import pandas as pd
-import logging
 
 
 class UI(Node):
@@ -71,7 +68,7 @@ class UI(Node):
         self._loop = asyncio.get_event_loop()
         server = self._loop.create_server(handler, host=host, port=port)
         Thread(target=self._run, args=(server,)).start()
-        logging.info('UI available at http://%s:%d' % (host, port))
+        self.logger.info('UI available at http://%s:%d' % (host, port))
 
 
     def _run(self, server):
@@ -83,22 +80,22 @@ class UI(Node):
             return web.Response(text=f.read(), content_type='text/html')
 
     async def _on_connect(self, sid, environ):
-        logging.debug('Connect: %s', sid)
+        self.logger.debug('Connect: %s', sid)
         await self._sio.emit('streams', self._streams, room=sid)
 
     def _on_disconnect(self, sid):
-        logging.debug('Disconnect: %s', sid)
+        self.logger.debug('Disconnect: %s', sid)
 
     def _on_subscribe(self, sid, data):
-        logging.debug('Subscribe: %s to %s', sid, data)
+        self.logger.debug('Subscribe: %s to %s', sid, data)
         self._sio.enter_room(sid, data)
 
     def _on_unsubscribe(self, sid, data):
-        logging.debug('Unsubscribe: %s from %s', sid, data)
+        self.logger.debug('Unsubscribe: %s from %s', sid, data)
         self._sio.leave_room(sid, data)
 
     def _on_event(self, sid, data):
-        logging.debug('Event: %s', sid)
+        self.logger.debug('Event: %s', sid)
 
     async def _emit(self, event, data, room):
         await self._sio.emit(event, data, room=room)
@@ -130,4 +127,5 @@ class UI(Node):
                     self._add_stream(room, port.data)
                     self._send('data', data, room)
 
-
+    def terminate(self):
+        self._loop.call_soon_threadsafe(self._loop.stop)

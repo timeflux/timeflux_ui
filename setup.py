@@ -15,7 +15,7 @@ DEPENDENCIES = [
 ]
 
 setup(
-    name='Timeflux UI',
+    name='timeflux-ui',
     packages=find_packages(),
     include_package_data=True,
     version=VERSION,

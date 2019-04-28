@@ -9,7 +9,7 @@ First, make sure that [Timeflux is installed](https://github.com/timeflux/timefl
 You can then install this plugin in the ``timeflux`` environment:
 
 ```
-$ source activate timeflux
+$ conda activate timeflux
 $ pip install git+https://github.com/timeflux/timeflux_ui
 ```
 

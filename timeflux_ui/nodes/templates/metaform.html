@@ -64,7 +64,13 @@
         };
         xhr.onerror = function () {
           console.log('Error', xhr.statusText);
+          // remove success notification
+          document.getElementById('notification-success').classList.add('is-hidden');
+          var err = document.getElementById('notification-error');
+          err.textContent = (xhr.responseText || "An error occurred.");
+          err.classList.remove('is-hidden');
         };
+        
         xhr.open('POST', 'submit');
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.send(JSON.stringify(json_data));

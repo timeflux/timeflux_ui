@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import pathlib
 import threading
 import queue
@@ -11,6 +12,24 @@ import jinja2
 
 
 class MetadataUI(Node):
+    """
+
+    Example
+
+        - id: node_1
+          module: timeflux_ui.nodes.meta
+          class: MetadataUI
+          params:
+            port: 8883
+            fields:
+              email:
+                default: hello@example.com
+                type: email
+              name:
+                default: david
+              address: # empty
+
+    """
 
     def __init__(self, host='0.0.0.0', port=8800, fields=None, open_browser=True):
         super().__init__()
@@ -25,9 +44,10 @@ class MetadataUI(Node):
             webbrowser.open(f'http://{host}:{port}', new=0, autoraise=True)
 
     def update(self):
-        self.logger.info('Metawindow update')
-        if not self._queue.empty():
-            self.logger.info('Sending...')
+        while not self._queue.empty():
+            metadata = self._queue.get()
+            self.logger.info('Sending... %s', metadata)
+            self.o.meta = metadata
 
     def terminate(self):
         self._loop.call_soon_threadsafe(self._loop.stop)
@@ -53,11 +73,11 @@ class MetadataUI(Node):
                              loader=jinja2.FileSystemLoader(str(template_dir.resolve())))
         app.add_routes([
             web.get('/', self._index),
-            web.post('/', self._index),
+            web.post('/submit', self._submit),
         ])
         app.router.add_static('/js/', str(js_dir.resolve()))
         app.router.add_static('/css/', str(css_dir.resolve()))
-        handler = app.make_handler() #web.AppRunner(app)
+        handler = app.make_handler()  # web.AppRunner(app)
 
         # Create server
         self.logger.info('Creating event loop')
@@ -69,10 +89,6 @@ class MetadataUI(Node):
         self.logger.info('Server shutdown')
 
     async def _index(self, request):
-        if request.method == 'POST':
-            data = await request.read()
-            self.logger.info('data is %s', data)
-            self._queue.put('hello')
         fields = dict()
         for k, v in self._fields.items():
             v = v or {}
@@ -90,12 +106,17 @@ class MetadataUI(Node):
                                                   context)
         return response
 
-    async def _submit(self, request):
-        data = await request.read()
+    async def _submit(self, request: web.Request):
+        data = await request.json()
+        if '_timestamp' in data:
+            return web.Response(text='_timestamp is a reserved metadata',
+                                status=400)
+        data['_timestamp'] = datetime.datetime.utcnow().isoformat()
         self.logger.info('request: %s', data)
         try:
-            self._queue.put('message', False)
+            self._queue.put(data, False)
         except queue.Full:
-            return web.Response(text='full')
+            return web.Response(text='Could not handle the metadata changes',
+                                status=503)
 
         return await self._index(request)

@@ -7,45 +7,86 @@
   <link rel="stylesheet" href="/css/bulma.min.css">
   <script type="text/javascript">
     function addField() {
-        var new_meta_input = document.getElementById("new_meta_input");
-        var new_name = new_meta_input.value;
+        let new_meta_input = document.getElementById("new_meta_input");
+        let new_name = new_meta_input.value;
         if (new_name) {
-            var form = document.getElementById("field_parent");
-            var new_entry = document.getElementById("js-template").cloneNode(true);
+            let form = document.getElementById("field_parent");
+            let new_entry = document.getElementById("js-template").cloneNode(true);
             new_entry.classList.remove('is-hidden');
-            var new_label = new_entry.getElementsByTagName('label')[0];
+            let new_label = new_entry.getElementsByTagName('label')[0];
             new_label.innerHTML = new_name;
-            var new_input = new_entry.getElementsByTagName('input')[0];
+            let new_input = new_entry.getElementsByTagName('input')[0];
+            new_input.setAttribute('name', new_name);
             new_input.setAttribute('placeholder', new_name + ' value');
             form.appendChild(new_entry);
             new_meta_input.value = '';
         }
     }
+
+    function countdownClose(secs) {
+      if (secs <= 0) {
+          close();
+      }
+      document.getElementById("seconds").textContent = secs;
+      setTimeout(countdownClose, 1000, secs - 1);
+    }
+
+    function submitForm() {
+        // got this from https://stackoverflow.com/a/48892941/227103
+        let form = document.getElementById("form");
+        let formData = new FormData(form);
+        let json_data = Array.from(formData.entries()).reduce((memo, pair) => ({
+          ...memo,
+          [pair[0]]: pair[1],
+        }), {});
+
+        console.log('Submitting...', json_data);
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function () {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                  console.log('submit success!');
+                  // remove error notification
+                  document.getElementById('notification-error').classList.add('is-hidden');
+                  var ok = document.getElementById('notification-success');
+                  ok.classList.remove('is-hidden');
+                  setTimeout(countdownClose, 1000, 10 - 1);
+                } else {
+                  console.log('submit error!');
+                  // remove success notification
+                  document.getElementById('notification-success').classList.add('is-hidden');
+                  var err = document.getElementById('notification-error');
+                  err.textContent = (xhr.responseText || "An error occurred.");
+                  err.classList.remove('is-hidden');
+                }
+            }
+
+        };
+        xhr.onerror = function () {
+          console.log('Error', xhr.statusText);
+        };
+        xhr.open('POST', 'submit');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send(JSON.stringify(json_data));
+    }
   </script>
 </head>
 <body>
-{#    <div id="app">#}
-{#        <!-- Header -->#}
-{#        <nav class="navbar is-fixed-top is-dark">#}
-{#            <div class="navbar-brand">#}
-{#                <a class="navbar-item" href="https://timeflux.io">#}
-{#                    <span><i class="fas fa-lg fa-signature"></i></span>&nbsp;#}
-{#                    <strong>Timeflux metadata UI</strong>#}
-{#                </a>#}
-{#            </div>#}
-{#            <div class="navbar-menu">#}
-{#              <div class="navbar-end">#}
-{#                <p class="navbar-item ">#}
-{#                  v0.0.0#}
-{#                </p>#}
-{#              </div>#}
-{#            </div>#}
-{#        </nav>#}
-{#    </div>#}
 <section class="section">
 
+  <!-- template for new fields -->
+  <div id="js-template" class="field is-horizontal is-hidden">
+    <div class="field-label is-normal">
+      <label class="label"></label>
+    </div>
+    <div class="field-body">
+      <div class="control is-expanded">
+        <input class="input" type="text" placeholder="text" required data-lpignore=true>
+      </div>
+    </div>
+  </div>
 
-  <form method="post">
+  <form id="form" method="post" action="javascript:submitForm();">
     <div class="container">
 
       <h1 class="title is-centered">
@@ -60,21 +101,11 @@
           </div>
           <div class="field-body">
             <div class="control is-expanded">
-              <input class="input" type="{{ field['type'] }}" name="{{ field['name'] }}" placeholder="{{ field['placeholder'] }}" data-lpignore=true>
+              <input class="input" type="{{ field['type'] }}" name="{{ field['name'] }}" placeholder="{{ field['placeholder'] }}" required data-lpignore=true>
             </div>
           </div>
         </div>
         {% endfor %}
-        <div id="js-template" class="field is-horizontal is-hidden">
-          <div class="field-label is-normal">
-            <label class="label"></label>
-          </div>
-          <div class="field-body">
-            <div class="control is-expanded">
-              <input class="input" type="text" placeholder="text" data-lpignore=true>
-            </div>
-          </div>
-        </div>
       </div>
       <br>
       <div class="field is-horizontal">
@@ -105,18 +136,16 @@
         </div>
       </div>
 
-      {% if success %}
-        <div class="notification has-text-centered is-info">
-          {{ message }}
-        </div>
-      {% endif %}
+      <div id="notification-success" class="notification has-text-centered is-success is-hidden">
+        Metadata sent successfully. <br>
+        Closing window in <span id="seconds">10</span> seconds...
+      </div>
+
+      <div id="notification-error" class="notification has-text-centered is-danger is-hidden">
+      </div>
     </div>
   </form>
 </section>
-{#    <footer class="footer">#}
-{#        <div class="content has-text-centered">#}
-{#            hello world footer#}
-{#        </div>#}
-{#    </footer>#}
+
 </body>
 </html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Timeflux metadata</title>
+  <link rel="stylesheet" href="/css/bulma.min.css">
+  <script type="text/javascript">
+    function addField() {
+        var new_meta_input = document.getElementById("new_meta_input");
+        var new_name = new_meta_input.value;
+        if (new_name) {
+            var form = document.getElementById("field_parent");
+            var new_entry = document.getElementById("js-template").cloneNode(true);
+            new_entry.classList.remove('is-hidden');
+            var new_label = new_entry.getElementsByTagName('label')[0];
+            new_label.innerHTML = new_name;
+            var new_input = new_entry.getElementsByTagName('input')[0];
+            new_input.setAttribute('placeholder', new_name + ' value');
+            form.appendChild(new_entry);
+            new_meta_input.value = '';
+        }
+    }
+  </script>
+</head>
+<body>
+{#    <div id="app">#}
+{#        <!-- Header -->#}
+{#        <nav class="navbar is-fixed-top is-dark">#}
+{#            <div class="navbar-brand">#}
+{#                <a class="navbar-item" href="https://timeflux.io">#}
+{#                    <span><i class="fas fa-lg fa-signature"></i></span>&nbsp;#}
+{#                    <strong>Timeflux metadata UI</strong>#}
+{#                </a>#}
+{#            </div>#}
+{#            <div class="navbar-menu">#}
+{#              <div class="navbar-end">#}
+{#                <p class="navbar-item ">#}
+{#                  v0.0.0#}
+{#                </p>#}
+{#              </div>#}
+{#            </div>#}
+{#        </nav>#}
+{#    </div>#}
+<section class="section">
+
+
+  <form method="post">
+    <div class="container">
+
+      <h1 class="title is-centered">
+        Metadata form
+      </h1>
+
+      <div id="field_parent">
+        {% for field in fields.values() %}
+        <div class="field is-horizontal">
+          <div class="field-label is-normal">
+            <label class="label" for="{{ field['name'] }}">{{ field['name'] }}</label>
+          </div>
+          <div class="field-body">
+            <div class="control is-expanded">
+              <input class="input" type="{{ field['type'] }}" name="{{ field['name'] }}" placeholder="{{ field['placeholder'] }}" data-lpignore=true>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        <div id="js-template" class="field is-horizontal is-hidden">
+          <div class="field-label is-normal">
+            <label class="label"></label>
+          </div>
+          <div class="field-body">
+            <div class="control is-expanded">
+              <input class="input" type="text" placeholder="text" data-lpignore=true>
+            </div>
+          </div>
+        </div>
+      </div>
+      <br>
+      <div class="field is-horizontal">
+        <div class="field-label">
+          <!-- Left empty for spacing -->
+        </div>
+        <div class="field-body">
+          <div class="control">
+            <button class="button is-link">Submit</button>
+          </div>
+        </div>
+      </div>
+
+      <hr>
+      <div class="field is-horizontal">
+        <div class="field-label is-normal">
+          <label class="label" for="new_meta_field">New fields</label>
+        </div>
+        <div class="field-body">
+          <div class="control is-expanded">
+            <input id="new_meta_input" class="input" type="text" placeholder="new meta name" data-lpignore=true>
+          </div>
+          <div class="control">
+            <a class="button is-info" onclick="addField();">
+              Add new...
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {% if success %}
+        <div class="notification has-text-centered is-info">
+          {{ message }}
+        </div>
+      {% endif %}
+    </div>
+  </form>
+</section>
+{#    <footer class="footer">#}
+{#        <div class="content has-text-centered">#}
+{#            hello world footer#}
+{#        </div>#}
+{#    </footer>#}
+</body>
+</html>

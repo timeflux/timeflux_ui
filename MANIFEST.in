@@ -1,1 +1,2 @@
 recursive-include timeflux_ui/nodes/www *
+recursive-include timeflux_ui/nodes/templates *

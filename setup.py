@@ -11,6 +11,7 @@ with open('timeflux_ui/__init__.py') as f:
 
 DEPENDENCIES = [
     'aiohttp',
+    'aiohttp-jinja2',
     'python-socketio'
 ]
 

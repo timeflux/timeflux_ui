@@ -1,3 +1,4 @@
-git+https://github.com/timeflux/timeflux
+git+https://github.com/timeflux/timeflux#egg=timeflux
 aiohttp
+aiohttp-jinja2
 python-socketio

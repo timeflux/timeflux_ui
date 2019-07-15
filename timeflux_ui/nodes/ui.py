@@ -105,6 +105,7 @@ class UI(Node):
         asyncio.run_coroutine_threadsafe(self._emit(event, data, room), self._loop)
 
     def _convert(self, data):
+        data = data.copy()
         data['index'] = (data.index.values.astype(np.float64) / 1e6).astype(np.int64) # from ns to ms
         data.drop_duplicates(subset='index', keep='last', inplace=True) # remove duplicate indices
         data.set_index('index', inplace=True) # replace index

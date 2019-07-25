@@ -1,0 +1,10 @@
+graphs:
+
+  - nodes:
+    - id: ui
+      module: timeflux_ui.nodes.ui
+      class: UI
+      params:
+        routes:
+          hello: ./mywebapp
+    rate: 5

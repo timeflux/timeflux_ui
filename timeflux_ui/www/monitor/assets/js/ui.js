@@ -46,6 +46,7 @@ var app = new Vue({
     selected_stream: undefined,
     selected_channel: undefined,
     selected_event: undefined,
+    event_data: undefined,
     events: [ 'start', 'stop', 'pause', 'resume', 'observation'],
     streams: {}
   },
@@ -108,6 +109,16 @@ var app = new Vue({
       } else {
         create_chart(id, stream, channels, 'light');
       }
+    },
+
+    send_event: function() {
+      if (this.selected_event) {
+        socket.emit('event', {
+          label: this.selected_event,
+          data: this.event_data
+        });
+      }
+
     }
 
   }

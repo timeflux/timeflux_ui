@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Timeflux</title>
-    <link rel="stylesheet" href="/css/bulma.min.css">
-    <link rel="stylesheet" href="/css/ui.css">
+    <link rel="stylesheet" href="/common/assets/css/bulma.min.css">
+    <link rel="stylesheet" href="assets/css/ui.css">
   </head>
   <body>
     <div id="app">
@@ -91,10 +91,10 @@
                     </div>
                   </div>
                   <div class="control">
-                    <input class="input" type="text">
+                    <input class="input" type="text" v-model="event_data">
                   </div>
                   <div class="control">
-                    <button class="button is-info">
+                    <button v-on:click="send_event" class="button is-info">
                       Send
                     </button>
                   </div>
@@ -135,10 +135,10 @@
       </div>
     </template>
 
-    <script src="/js/vue.js"></script>
-    <script src="/js/fa.js"></script>
-    <script src="/js/socket.io.js"></script>
-    <script src="/js/smoothie.js"></script>
-    <script src="/js/ui.js"></script>
+    <script src="/common/assets/js/vue.js"></script>
+    <script src="/common/assets/js/fa.js"></script>
+    <script src="/common/assets/js/socket.io.js"></script>
+    <script src="assets/js/smoothie.js"></script>
+    <script src="assets/js/ui.js"></script>
   </body>
 </html>

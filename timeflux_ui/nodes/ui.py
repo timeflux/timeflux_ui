@@ -6,19 +6,26 @@ import asyncio
 import socketio
 from aiohttp import web
 from threading import Thread, Lock
+from timeflux.helpers import clock
 from timeflux.core.node import Node
 
 
 class UI(Node):
 
-    """Real-time data stream visualization in the browser.
+    """Interact with Timeflux from the browser.
 
-    This node provides a web monitoring interface, that is available at ``http://localhost:8000`` by default.
-    This node accepts any number of named input ports.
+    This node provides a web interface, available at ``http://localhost:8000`` by
+    default. Bi-directional communication is possible through the WebSocket protocol.
 
+    A real-time data stream visualization application is provided at
+    ``http://localhost:8000/monitor/``. More applications are coming.
+
+    This node accepts any number of named input ports. The default output port forwards
+    the events received from the browser.
 
     Attributes:
-        i_* (Port): Dynamic inputs, expects DataFrame.
+        i_* (Port): Dynamic inputs, expect DataFrame.
+        o (Port): Default output, provide DataFrame.
 
     Example:
         .. literalinclude:: /../../timeflux_ui/test/graphs/ui.yaml
@@ -26,18 +33,19 @@ class UI(Node):
 
     """
 
-    def __init__(self, host='0.0.0.0', port=8000, debug=False):
+    def __init__(self, host='localhost', port=8000, routes={}, debug=False):
 
         """
         Args:
             host (string): The host to bind to.
             port (int): The port to listen to.
+            routes (dict): A dictionary of custom web apps. Key is the name, value is the path.
             debug (bool): Show dependencies debug information.
         """
 
-        self._root = os.path.join(os.path.dirname(__file__), 'www')
+        self._root = os.path.join(os.path.dirname(__file__), '../www')
         self._streams = {}
-        self._events = { '' }
+        self._events = {}
         self._lock = Lock()
 
         # Debug
@@ -49,9 +57,22 @@ class UI(Node):
 
         # HTTP
         app = web.Application()
-        app.router.add_static('/js/', self._root + '/js')
-        app.router.add_static('/css/', self._root + '/css')
-        app.add_routes([web.get('/', self._index)])
+        app.router.add_static('/common/assets/', self._root + '/common/assets')
+        app.router.add_static('/monitor/assets/', self._root + '/monitor/assets')
+        app.add_routes([
+            web.get('/', self._route_index),
+            web.get('/{default}', self._route_default)
+        ])
+
+        # Apps
+        self._routes = { 'monitor': self._root + '/monitor' }
+        self._routes.update(routes)
+        for name, path in self._routes.items():
+            try:
+                app.router.add_static(f'/{name}/assets/', f'{path}/assets')
+            except ValueError:
+                pass
+            app.add_routes([web.get(f'/{name}/', self._route_app)])
 
         # Websocket
         self._sio = socketio.AsyncServer()
@@ -75,9 +96,19 @@ class UI(Node):
         self._loop.run_until_complete(server)
         self._loop.run_forever()
 
-    async def _index(self, request):
-        with open(self._root + '/index.html') as f:
-            return web.Response(text=f.read(), content_type='text/html')
+    async def _route_index(self, request):
+        raise web.HTTPFound('/monitor/')
+
+    async def _route_default(self, request):
+        raise web.HTTPFound(request.path + '/')
+
+    async def _route_app(self, request):
+        name = request.path.strip('/')
+        try:
+            with open(self._routes[name] + '/index.html') as f:
+                return web.Response(text=f.read(), content_type='text/html')
+        except:
+            raise web.HTTPNotFound()
 
     async def _on_connect(self, sid, environ):
         self.logger.debug('Connect: %s', sid)
@@ -95,7 +126,13 @@ class UI(Node):
         self._sio.leave_room(sid, data)
 
     def _on_event(self, sid, data):
-        self.logger.debug('Event: %s', sid)
+        now = clock.now()
+        if not self._events:
+            self._events = {'label': [], 'data': [], 'time': []}
+        self._events['label'].append(data['label'])
+        self._events['data'].append(data['data'])
+        self._events['time'].append(now)
+
 
     async def _emit(self, event, data, room):
         await self._sio.emit(event, data, room=room)
@@ -118,6 +155,7 @@ class UI(Node):
             self._send('streams', self._streams)
 
     def update(self):
+        # Send input to WebSocket
         for name, port in self.ports.items():
             if name.startswith('i_'):
                 if port.data is not None:
@@ -128,6 +166,10 @@ class UI(Node):
                     }
                     self._add_stream(room, port.data)
                     self._send('data', data, room)
+        # Send events from WebSocket to output
+        if self._events:
+            self.o.data = pd.DataFrame({'label': self._events['label'], 'data': self._events['data']}, self._events['time'])
+            self._events = {}
 
     def terminate(self):
         self._loop.call_soon_threadsafe(self._loop.stop)

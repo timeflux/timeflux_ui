@@ -21,12 +21,17 @@ graphs:
         value_min: -100
         value_max: 100
         seed: 1
-    - id: viz
+    - id: ui
       module: timeflux_ui.nodes.ui
       class: UI
+    - id: events
+      module: timeflux.nodes.debug
+      class: Display
     edges:
     - source: data1
-      target: viz:test1
+      target: ui:test1
     - source: data2
-      target: viz:test2
+      target: ui:test2
+    - source: ui
+      target: events
     rate: 5

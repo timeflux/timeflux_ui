@@ -1,0 +1,129 @@
+  /**********/
+ /* COMMON */
+/**********/
+
+body {
+    font-family: BlinkMacSystemFont,-apple-system,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+* { outline: none; }
+
+
+  /***************/
+ /* MAIN LAYOUT */
+/***************/
+
+#wrapper {
+
+    /* Full with, full height */
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+
+    /* Grid settings */
+    display: grid;
+    padding: 10px;
+    grid-gap: 10px;
+    background-color: #ccc;
+    grid-template-columns: auto minmax(auto, 960px) auto;
+    grid-template-rows: max-content auto max-content;
+    grid-template-areas: "header header header" ". main ." "footer footer footer";
+}
+
+#wrapper.flash {
+    background-color: #fff;
+}
+
+#wrapper > div {
+  color: #fff;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+#header { grid-area: header;}
+#footer { grid-area: footer; }
+#main { grid-area: main; }
+
+#header, #footer {
+    background-color: #444;
+}
+
+#header {
+    text-align: center;
+}
+
+#instructions {
+    height: 40px;
+    line-height: 40px;
+    float: left;
+    overflow: hidden;
+    max-width: calc(100% - 120px);
+}
+
+#button {
+    float: right;
+    font-size: 1rem;
+    height: 40px;
+    /*
+    background-color: #00d1b2;
+    border: none;
+    */
+    background-color: transparent;
+    border: 1px solid white;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 0 10px;
+}
+
+#button:hover:enabled {
+    /*background-color: #00c4a7;*/
+    background-color: #555;
+}
+
+#button:disabled {
+    cursor: not-allowed;
+    border: 1px solid #777;
+    color: #777;
+}
+
+
+  /***************/
+ /* SYMBOL GRID */
+/***************/
+
+#symbols {
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* Will be overwritten by JavaScript */
+    grid-auto-rows: 1fr;
+    align-items: center;
+    justify-items: center;
+}
+
+.symbol {
+    border-radius: 4px;
+    color: #444;
+    text-align: center;
+    background-color: white;
+    width: 50px;
+    padding: 15px 0px;
+    font-size: 15px;
+}
+
+.symbol.flash {
+    font-weight: bolder;
+    font-size: 30px;
+    padding: 15px 5px;
+    width: 60px;
+    color: blue;
+    background-color: cyan;
+}
+
+.symbol.focus {
+    font-weight: bolder;
+    font-size: 30px;
+    padding: 15px 5px;
+    width: 60px;
+    color: blue;
+    background-color: yellow;
+}

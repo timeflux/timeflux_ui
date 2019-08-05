@@ -27,11 +27,16 @@ graphs:
     - id: events
       module: timeflux.nodes.debug
       class: Display
+    - id: test
+      module: timeflux.nodes.debug
+      class: Display
     edges:
     - source: data1
       target: ui:test1
     - source: data2
       target: ui:test2
-    - source: ui
+    - source: ui:events
       target: events
+    - source: data1
+      target: test
     rate: 5

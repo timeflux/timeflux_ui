@@ -1,0 +1,16 @@
+graphs:
+
+  - nodes:
+    - id: speller
+      module: timeflux_ui.nodes.ui
+      class: UI
+      params:
+        routes:
+          p300: p300
+    - id: display
+      module: timeflux.nodes.debug
+      class: Display
+    edges:
+      - source: speller:events
+        target: display
+    rate: 20

@@ -1,4 +1,4 @@
-var socket = io();
+var io = new IO();
 
 var charts = {}
 var series = {}
@@ -29,7 +29,7 @@ var Chart = Vue.extend({
       }
       if (Object.keys(series[this.stream]).length === 0) {
         delete series[this.stream];
-        socket.emit('unsubscribe', this.stream);
+        io.unsubscribe(this.stream);
       }
       this.$el.parentNode.removeChild(this.$el);
       this.$destroy();
@@ -79,7 +79,7 @@ var app = new Vue({
       }
 
       // Subscribe to stream
-      socket.emit('subscribe', stream);
+      io.subscribe(stream);
 
       // Unique ID for this chart
       id = Math.random().toString(36).substr(2, 9) + '_' + stream;
@@ -113,10 +113,7 @@ var app = new Vue({
 
     send_event: function() {
       if (this.selected_event) {
-        socket.emit('event', {
-          label: this.selected_event,
-          data: this.event_data
-        });
+        io.event(this.selected_event, this.event_data);
       }
 
     }
@@ -168,30 +165,30 @@ function create_chart(id, stream, channels, theme) {
   }
 }
 
-function update_series(data) {
-  if (series[data.name] !== undefined) {
-    for (const timestamp of Object.keys(data.samples)) {
-      for (const channel of Object.keys(data.samples[timestamp])) {
-        if (series[data.name][channel] !== undefined) {
-          series[data.name][channel]['instance'].append(timestamp, data.samples[timestamp][channel]);
+function update_series(payload) {
+  if (series[payload.name] !== undefined) {
+    for (const timestamp of Object.keys(payload.data)) {
+      for (const channel of Object.keys(payload.data[timestamp])) {
+        if (series[payload.name][channel] !== undefined) {
+          series[payload.name][channel]['instance'].append(timestamp, payload.data[timestamp][channel]);
         }
       }
     }
   }
 }
 
-socket.on('connect', function() {
+io.on('connect', function() {
   app.connected = true;
 });
 
-socket.on('disconnect', function() {
+io.on('disconnect', function() {
   app.connected = false;
 });
 
-socket.on('data', function(data){
-  update_series(data);
+io.on('stream', function(payload){
+  update_series(payload);
 });
 
-socket.on('streams', function(data) {
-  app.streams = data;
+io.on('streams', function(payload) {
+  app.streams = payload;
 });

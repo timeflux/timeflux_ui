@@ -1,11 +1,11 @@
 import logging
 import os
+import json
 import numpy as np
 import pandas as pd
 import asyncio
-import socketio
 from aiohttp import web
-from threading import Thread, Lock
+from threading import Thread
 from timeflux.helpers import clock
 from timeflux.core.node import Node
 
@@ -15,17 +15,17 @@ class UI(Node):
     """Interact with Timeflux from the browser.
 
     This node provides a web interface, available at ``http://localhost:8000`` by
-    default. Bi-directional communication is possible through the WebSocket protocol.
+    default. Bi-directional communication is available through the WebSocket protocol.
 
     A real-time data stream visualization application is provided at
     ``http://localhost:8000/monitor/``. More applications are coming.
 
-    This node accepts any number of named input ports. The default output port forwards
-    the events received from the browser.
+    This node accepts any number of named input ports. Streams received from the browser
+    are forwarded to output ports.
 
     Attributes:
         i_* (Port): Dynamic inputs, expect DataFrame.
-        o (Port): Default output, provide DataFrame.
+        o_* (Port): Dynamic outputs, provide DataFrame.
 
     Example:
         .. literalinclude:: /../../timeflux_ui/test/graphs/ui.yaml
@@ -44,9 +44,10 @@ class UI(Node):
         """
 
         self._root = os.path.join(os.path.dirname(__file__), '../www')
+        self._clients = {}
+        self._subscriptions = {}
         self._streams = {}
-        self._events = {}
-        self._lock = Lock()
+        self._buffer = {}
 
         # Debug
         if not debug:
@@ -61,6 +62,7 @@ class UI(Node):
         app.router.add_static('/monitor/assets/', self._root + '/monitor/assets')
         app.add_routes([
             web.get('/', self._route_index),
+            web.get('/ws', self._route_ws),
             web.get('/{default}', self._route_default)
         ])
 
@@ -73,15 +75,6 @@ class UI(Node):
             except ValueError:
                 pass
             app.add_routes([web.get(f'/{name}/', self._route_app)])
-
-        # Websocket
-        self._sio = socketio.AsyncServer()
-        self._sio.attach(app)
-        self._sio.on('connect', self._on_connect)
-        self._sio.on('disconnect', self._on_disconnect)
-        self._sio.on('subscribe', self._on_subscribe)
-        self._sio.on('unsubscribe', self._on_unsubscribe)
-        self._sio.on('event', self._on_event)
 
         # Do not block
         # https://stackoverflow.com/questions/51610074/how-to-run-an-aiohttp-server-in-a-thread
@@ -96,11 +89,31 @@ class UI(Node):
         self._loop.run_until_complete(server)
         self._loop.run_forever()
 
+
     async def _route_index(self, request):
         raise web.HTTPFound('/monitor/')
 
+
+    async def _route_ws(self, request):
+        ws = web.WebSocketResponse()
+        if 'uuid' not in request.rel_url.query: return ws
+        uuid = request.rel_url.query['uuid']
+        self._clients[uuid] = { 'socket': ws, 'subscriptions': set() }
+        await ws.prepare(request)
+        await self._on_connect(uuid)
+        async for msg in ws:
+            if msg.type == web.WSMsgType.TEXT:
+                await self._on_message(uuid, msg)
+        for subscription in self._clients[uuid]['subscriptions'].copy():
+            self._on_unsubscribe(uuid, subscription)
+        del self._clients[uuid]
+        self._on_disconnect(uuid)
+        return ws
+
+
     async def _route_default(self, request):
         raise web.HTTPFound(request.path + '/')
+
 
     async def _route_app(self, request):
         name = request.path.strip('/')
@@ -110,66 +123,155 @@ class UI(Node):
         except:
             raise web.HTTPNotFound()
 
-    async def _on_connect(self, sid, environ):
-        self.logger.debug('Connect: %s', sid)
-        await self._sio.emit('streams', self._streams, room=sid)
 
-    def _on_disconnect(self, sid):
-        self.logger.debug('Disconnect: %s', sid)
-
-    def _on_subscribe(self, sid, data):
-        self.logger.debug('Subscribe: %s to %s', sid, data)
-        self._sio.enter_room(sid, data)
-
-    def _on_unsubscribe(self, sid, data):
-        self.logger.debug('Unsubscribe: %s from %s', sid, data)
-        self._sio.leave_room(sid, data)
-
-    def _on_event(self, sid, data):
-        now = clock.now()
-        if not self._events:
-            self._events = {'label': [], 'data': [], 'time': []}
-        self._events['label'].append(data['label'])
-        self._events['data'].append(data['data'])
-        self._events['time'].append(now)
+    async def _on_connect(self, uuid):
+        self.logger.debug('Connect: %s', uuid)
+        await self._send('streams', self._streams, uuid=uuid)
 
 
-    async def _emit(self, event, data, room):
-        await self._sio.emit(event, data, room=room)
+    def _on_disconnect(self, uuid):
+        self.logger.debug('Disconnect: %s', uuid)
 
-    def _send(self, event, data, room=None):
-        # https://docs.python.org/3/library/asyncio-dev.html#concurrency-and-multithreading
-        asyncio.run_coroutine_threadsafe(self._emit(event, data, room), self._loop)
 
-    def _convert(self, data):
-        data = data.copy()
+    async def _on_message(self, uuid, message):
+        try:
+            message = message.json()
+            if 'command' not in message or 'payload' not in message:
+                message = False
+        except json.decoder.JSONDecodeError:
+            message = False
+        if not message:
+            self.logger.warn('Received an invalid JSON message from %s', uuid)
+            return
+        if 'ack' in message and message['ack']:
+            await self._send('ack', message['ack'], uuid=uuid)
+        if message['command'] == 'subscribe':
+            self._on_subscribe(uuid, message['payload'])
+        elif message['command'] == 'unsubscribe':
+            self._on_unsubscribe(uuid, message['payload'])
+        elif message['command'] == 'publish':
+            await self._on_publish(
+                message['payload']['name'],
+                message['payload']['data'],
+                message['payload']['meta']
+            )
+            await self._send(
+                'stream', message['payload'],
+                topic=message['payload']['name']
+            )
+        elif message['command'] == 'sync':
+            # TODO
+            pass
+
+
+    def _on_subscribe(self, uuid, topic):
+        self.logger.debug('Subscribe: %s to %s', uuid, topic)
+        self._clients[uuid]['subscriptions'].add(topic)
+        if topic not in self._subscriptions:
+            self._subscriptions[topic] = { uuid }
+        else:
+            self._subscriptions[topic].add(uuid)
+
+
+    def _on_unsubscribe(self, uuid, topic):
+        self.logger.debug('Unsubscribe: %s from %s', uuid, topic)
+        self._clients[uuid]['subscriptions'].discard(topic)
+        if topic not in self._subscriptions: return
+        if uuid not in self._subscriptions[topic]: return
+        self._subscriptions[topic].discard(uuid)
+        if len(self._subscriptions[topic]) == 0:
+            del self._subscriptions[topic]
+
+
+    async def _on_publish(self, name, data, meta):
+        if data and name not in self._streams:
+            channels = list(list(data.values())[0].keys())
+            await self._add_stream(name, channels)
+            self._buffer[name] = { 'data': {}, 'meta': None }
+        self._buffer[name]['data'].update(data)
+        self._buffer[name]['meta'] = meta
+
+
+    async def _send(self, command, payload, uuid=None, topic=None):
+        message = json.dumps({'command': command, 'payload': payload})
+        if not uuid and not topic:
+            # Broadcast to all clients
+            for uuid in self._clients:
+                await self._clients[uuid]['socket'].send_str(message)
+        if uuid:
+            # Send to one client
+            await self._clients[uuid]['socket'].send_str(message)
+        if topic:
+            # Send to all this topic's subscribers
+            if topic in self._subscriptions:
+                for uuid in self._subscriptions[topic]:
+                    await self._clients[uuid]['socket'].send_str(message)
+
+
+    def _to_dict(self, data):
+        # Some users report a warning ("A value is trying to be set on a copy of a slice
+        # from a DataFrame"). I was not able to reproduce the behavior, but the
+        # data.copy() instruction seems to fix the issue, although it is somewhat
+        # probably impacting memory. This should be investigated further.
+        # See: https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
+        data = data.copy() # Remove?
         data['index'] = (data.index.values.astype(np.float64) / 1e6).astype(np.int64) # from ns to ms
         data.drop_duplicates(subset='index', keep='last', inplace=True) # remove duplicate indices
         data.set_index('index', inplace=True) # replace index
         data = data.to_dict(orient='index') # export to dict
         return data
 
-    def _add_stream(self, name, data):
-        if not name in self._streams:
-            self._streams[name] = list(data.columns)
-            self._send('streams', self._streams)
+
+    def _from_dict(self, data):
+        try:
+            data = pd.DataFrame.from_dict(data, orient='index')
+            data.index = pd.to_datetime(data.index, unit='ms')
+        except ValueError:
+            self.logger.warn('Invalid stream data')
+            return None
+        return data
+
+
+    async def _add_stream(self, name, channels):
+        self._streams[name] = channels
+        await self._send('streams', self._streams)
+
+
+    async def _get_buffer(self, name):
+        data = self._buffer[name]['data']
+        meta = self._buffer[name]['meta']
+        self._buffer[name] = { 'data': {}, 'meta': None }
+        return data, meta
+
+
+    def _run_safe(self, coroutine, wait=True):
+        # https://docs.python.org/3/library/asyncio-dev.html#concurrency-and-multithreading
+        future = asyncio.run_coroutine_threadsafe(coroutine, self._loop)
+        return future.result() if wait else future
+
 
     def update(self):
-        # Send input to WebSocket
+        # Forward node input streams to WebSocket
         for name, port in self.ports.items():
             if name.startswith('i_'):
                 if port.data is not None:
-                    room = name[2:]
+                    stream = name[2:]
                     data = {
-                        'name': room,
-                        'samples': self._convert(port.data)
+                        'name': stream,
+                        'data': self._to_dict(port.data),
+                        'meta': port.meta
                     }
-                    self._add_stream(room, port.data)
-                    self._send('data', data, room)
-        # Send events from WebSocket to output
-        if self._events:
-            self.o.data = pd.DataFrame({'label': self._events['label'], 'data': self._events['data']}, self._events['time'])
-            self._events = {}
+                    if name not in self._streams:
+                        self._run_safe(self._add_stream(stream, list(port.data.columns)))
+                    self._run_safe(self._send('stream', data, topic=stream))
+        # Forward WebSocket streams to node output
+        for name in self._buffer.keys():
+            data, meta = self._run_safe(self._get_buffer(name))
+            if data or meta:
+                getattr(self, 'o_' + name).data = self._from_dict(data)
+                getattr(self, 'o_' + name).meta = meta
+
 
     def terminate(self):
         self._loop.call_soon_threadsafe(self._loop.stop)
+

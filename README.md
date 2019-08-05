@@ -1,6 +1,6 @@
 # Timeflux UI
 
-This plugin provides a monitoring web interface for Timeflux. It is not feature-complete yet, but already allows you to visualize your data streams in real-time, in your browser.
+This plugin provides a framework to develop web applications that can interface with Timeflux. A monitoring web interface is bundled. It is not feature-complete yet, but it already allows you to visualize your data streams in real-time, in your browser, and to send events. Other examples include a SSVEP scheduler and a P300 speller. Both can be found in the ``apps`` directory.
 
 ## Installation
 

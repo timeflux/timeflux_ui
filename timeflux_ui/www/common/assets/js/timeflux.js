@@ -211,6 +211,7 @@ class IO {
    * @returns {boolean}
    */
   event(label, data = null) {
+    if (data) data = JSON.stringify(data);
     this.commit('events', { label: label, data: data });
     return this.publish('events');
   }

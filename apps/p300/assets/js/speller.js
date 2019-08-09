@@ -23,9 +23,23 @@ class Speller {
      * @param {number} [options.groups] - number of groups
      * @param {number} [options.repetitions] - number of rounds in a block
      * @param {HTMLElement} [options.symbol_grid] - grid container DOM node
-     * @param {string} [options.symbol_class] - CSS class prefix used for grid items
-     * @param {string} [options.focus_class] - CSS class to apply on focus
-     * @param {string} [options.flash_class] - CSS class to apply on flash
+     * @param {Object} [options.classes]
+     * @param {string} [options.classes.symbol] - CSS class prefix used for grid items
+     * @param {string} [options.classes.focus] - CSS class to apply on focus
+     * @param {string} [options.classes.flash] - CSS class to apply on flash
+     * @param {Object} [options.durations]
+     * @param {number} [options.durations.baseline_eyes_open] - milliseconds
+     * @param {number} [options.durations.baseline_eyes_closed] - milliseconds
+     * @param {number} [options.durations.focus] - milliseconds
+     * @param {number} [options.durations.inter_block] - milliseconds
+     * @param {number} [options.durations.flash] - milliseconds (from exponential distribution)
+     * @param {number} [options.durations.flash.expectation] - milliseconds
+     * @param {number} [options.durations.flash.min] - milliseconds
+     * @param {number} [options.durations.flash.max] - milliseconds
+     * @param {number} [options.durations.inter_flash] - milliseconds (from exponential distribution)
+     * @param {number} [options.durations.inter_flash.expectation] - milliseconds
+     * @param {number} [options.durations.inter_flash.min] - milliseconds
+     * @param {number} [options.durations.inter_flash.max] - milliseconds
      */
     constructor(options = {}) {
         let default_options = {
@@ -34,9 +48,28 @@ class Speller {
             groups: 12,
             repetitions: 3,
             symbol_grid: document.getElementById('symbols'),
-            symbol_class: 'symbol',
-            focus_class: 'focus',
-            flash_class: 'flash'
+            classes: {
+                symbol: 'symbol',
+                focus: 'focus',
+                flash: 'flash'
+            },
+            durations: {
+                baseline_eyes_open: 30000,
+                baseline_eyes_closed: 30000,
+                focus: 500,
+                inter_block: 1000,
+                flash: {
+                    expectation: 80,
+                    min: 60,
+                    max: 160
+                },
+                inter_flash: {
+                    expectation: 120,
+                    min: 80,
+                    max: 300
+                }
+            },
+
         };
         this.options = Object.assign(default_options, options);
         this.beep = new Audio('assets/wav/beep.wav');
@@ -65,8 +98,8 @@ class Speller {
         this.options.symbol_grid.style.gridTemplateColumns = 'repeat(' + this.options.columns + ', 1fr)';
         for (let i in this.options.symbols) {
             let  symbol = document.createElement('div');
-            symbol.className = this.options.symbol_class
-            symbol.id = this.options.symbol_class + '_' + i;
+            symbol.className = this.options.classes.symbol;
+            symbol.id = this.options.classes.symbol + '_' + i;
             symbol.textContent = this.options.symbols[i];
             this.options.symbol_grid.appendChild(symbol);
         }
@@ -171,10 +204,10 @@ class Speller {
      */
     async focus(symbol, duration) {
         let element = document.getElementById('symbol_' + symbol);
-        element.classList.add(this.options.focus_class);
+        element.classList.add(this.options.classes.focus);
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                element.classList.remove(this.options.focus_class);
+                element.classList.remove(this.options.classes.focus);
                 resolve(true);
             }, duration);
         });
@@ -191,13 +224,13 @@ class Speller {
             for (let symbol of this.groups[group]) {
                 let element = document.getElementById('symbol_' + symbol);
                 elements.push(element);
-                element.classList.add(this.options.flash_class);
+                element.classList.add(this.options.classes.flash);
             }
             let includes_target = this.status == 'testing' ? null : this.groups[group].includes(this.target);
             this.io.event('flash_begins', { group: group, includes_target: includes_target });
             setTimeout(() => {
                 for (let element of elements) {
-                    element.classList.remove(this.options.flash_class);
+                    element.classList.remove(this.options.classes.flash);
                 }
                 this.io.event('flash_ends');
                 resolve({group: group, duration, duration});
@@ -215,8 +248,16 @@ class Speller {
         // Flash and wait
         this.io.event('round_begins');
         for (let group of groups) {
-            await this.flash(group, this._rand_range(80, 60, 160));
-            await this.wait(this._rand_range(120, 80, 300));
+            await this.flash(group, this._rand_range(
+                this.options.durations.flash.expectation,
+                this.options.durations.flash.min,
+                this.options.durations.flash.max
+            ));
+            await this.wait(this._rand_range(
+                this.options.durations.inter_flash.expectation,
+                this.options.durations.inter_flash.min,
+                this.options.durations.inter_flash.max
+            ));
         }
         this.io.event('round_ends');
         return Promise.resolve(true);
@@ -246,23 +287,23 @@ class Speller {
         this.beep.play();
         this.trigger('baseline-eyes-open_begins');
         this.io.event('baseline-eyes-open_begins');
-        await this.wait(3000);
+        await this.wait(this.options.durations.baseline_eyes_open);
         this.io.event('baseline-eyes-open_ends');
         this.beep.play();
         this.trigger('baseline-eyes-closed_begins');
         this.io.event('baseline-eyes-closed_begins');
-        await this.wait(3000);
+        await this.wait(this.options.durations.baseline_eyes_closed);
         this.io.event('baseline-eyes-closed_ends');
         this.io.event('training_begins', { targets: targets });
         for (let target of targets) {
             this.target = this._get_symbol(target);
             this.beep.play();
-            this.trigger('focus_begins', { target: target });
-            this.io.event('focus_begins', { target: target });
-            await this.focus(this.target, 500);
+            this.trigger('focus_begins', target);
+            this.io.event('focus_begins', { target: this.target });
+            await this.focus(this.target, this.options.durations.focus);
             this.io.event('focus_ends');
-            await this.wait(1000);
-            this.io.event('block_begins', { target: target });
+            await this.wait(this.options.durations.inter_block);
+            this.io.event('block_begins', { target: this.target });
             await this.block(this.options.repetitions);
             this.io.event('block_ends');
         }
@@ -282,7 +323,7 @@ class Speller {
         this.status = 'testing';
         while (this.status == 'testing') {
             this.beep.play();
-            await this.wait(1000);
+            await this.wait(this.options.durations.inter_block);
             this.io.event('block_begins', { target: null });
             await this.block(this.options.repetitions);
             this.io.event('block_ends');

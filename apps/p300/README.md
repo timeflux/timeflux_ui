@@ -11,9 +11,9 @@ Label                           | Data
 ``baseline-eyes-closed_begins`` | ``null``
 ``baseline-eyes-closed_ends``   | ``null``
 ``training_begins``             | ``{ "targets": <string> }``
-``focus_begins``                | ``{ "target": <char> }``
+``focus_begins``                | ``{ "target": <int> }``
 ``focus_ends``                  | ``null``
-``block_begins``                | ``{ "target": <char>|null }``
+``block_begins``                | ``{ "target": <int>|null }``
 ``round_begins``                | ``null``
 ``flash_begins``                | ``{ "group": <int>, "includes_target": <bool>|null }``
 ``flash_ends``                  | ``null``
@@ -31,4 +31,4 @@ Label                    | Data
 ------------------------ | ----
 ``model-fitting_begins`` | ``null``
 ``model-fitting_ends``   | ``null``
-``model_predicts``       | ``{ "target": <char>, "precision": <float> }``
+``model_predicts``       | ``{ "target": <int>, "precision": <float> }``

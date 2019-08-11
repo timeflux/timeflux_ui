@@ -19,6 +19,7 @@ class Speller {
     /**
      * @param {Object} [options]
      * @param {string} [options.symbols] - list of characters available for the speller
+     * @param {string} [options.targets] - list of characters used for training
      * @param {number} [options.columns] - number of columns in the grid
      * @param {number} [options.groups] - number of groups
      * @param {number} [options.repetitions] - number of rounds in a block
@@ -44,6 +45,7 @@ class Speller {
     constructor(options = {}) {
         let default_options = {
             symbols: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890',
+            targets: 'TRAINING',
             columns: 6,
             groups: 12,
             repetitions: 3,
@@ -54,8 +56,8 @@ class Speller {
                 flash: 'flash'
             },
             durations: {
-                baseline_eyes_open: 30000,
-                baseline_eyes_closed: 30000,
+                baseline_eyes_open: 3000,
+                baseline_eyes_closed: 3000,
                 focus: 500,
                 inter_block: 1000,
                 flash: {
@@ -280,7 +282,8 @@ class Speller {
      *
      * @param {string} [targets]
      */
-    async train(targets = 'TRAINING') {
+    async train(targets) {
+        if (targets === undefined) targets = this.options.targets;
         this.io.event('calibration_begins');
         this.status = 'calibrating';
         targets = targets.toUpperCase();

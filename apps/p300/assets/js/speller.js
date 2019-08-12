@@ -56,8 +56,8 @@ class Speller {
                 flash: 'flash'
             },
             durations: {
-                baseline_eyes_open: 3000,
-                baseline_eyes_closed: 3000,
+                baseline_eyes_open: 30000,
+                baseline_eyes_closed: 30000,
                 focus: 500,
                 inter_block: 1000,
                 flash: {
@@ -109,25 +109,29 @@ class Speller {
 
     /**
      * Create random groups
-     * Each symbol must be in exactly two groups
      */
     _make_groups() {
         this.groups = Array.from({length: this.options.groups}, () => []);
         for (let i in this.options.symbols) {
-            this._assign_group(i);
-            this._assign_group(i);
+            this._assign_groups(i);
         }
     }
 
     /**
-     * Assign a group to the given symbol
+     * Assign groups to the given symbol
      */
-    _assign_group(symbol) {
+    _assign_groups(symbol) {
         let max_length = Math.ceil(this.options.symbols.length * 2 / this.options.groups);
-        let group = this._rand_group();
-        if (symbol in this.groups[group] || this.groups[group].length == max_length) {
-            this._assign_group(symbol);
-        } else {
+        let groups = [0, 0]; // Each symbol must be in exactly two groups
+        while (groups.length !== [...new Set(groups)].length) {
+            for (let i = 0; i < groups.length; i++) {
+                groups[i] = this._rand_group();
+                while (this.groups[groups[i]].length === max_length) {
+                    groups[i] = this._rand_group();
+                }
+            }
+        }
+        for (let group of groups) {
             this.groups[group].push(symbol);
         }
     }

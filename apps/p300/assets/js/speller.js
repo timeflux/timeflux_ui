@@ -113,7 +113,12 @@ class Speller {
     _make_groups() {
         this.groups = Array.from({length: this.options.groups}, () => []);
         for (let i in this.options.symbols) {
-            this._assign_groups(i);
+            try {
+                this._assign_groups(i);
+            }
+            catch(err) {
+                this._make_groups();
+            }
         }
     }
 
@@ -122,6 +127,8 @@ class Speller {
      */
     _assign_groups(symbol) {
         let max_length = Math.ceil(this.options.symbols.length * 2 / this.options.groups);
+        let remaining = this.groups.filter(group => group.length < max_length).length;
+        if (remaining < 2) throw False; // Unsolvable
         let groups = [0, 0]; // Each symbol must be in exactly two groups
         while (groups.length !== [...new Set(groups)].length) {
             for (let i = 0; i < groups.length; i++) {

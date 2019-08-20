@@ -18,7 +18,8 @@ class UI(Node):
     default. Bi-directional communication is available through the WebSocket protocol.
 
     A real-time data stream visualization application is provided at
-    ``http://localhost:8000/monitor/``. More applications are coming.
+    ``http://localhost:8000/monitor/``. Other example applications (such as P300 and
+    EEG signal quality) are provided in the ``apps`` directory of this package.
 
     This node accepts any number of named input ports. Streams received from the browser
     are forwarded to output ports.

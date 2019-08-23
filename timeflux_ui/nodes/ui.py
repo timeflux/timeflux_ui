@@ -54,8 +54,6 @@ class UI(Node):
         if not debug:
             logging.getLogger('asyncio').setLevel(logging.WARNING)
             logging.getLogger('aiohttp.access').setLevel(logging.WARNING)
-            logging.getLogger('engineio').setLevel(logging.WARNING)
-            logging.getLogger('socketio').setLevel(logging.WARNING)
 
         # HTTP
         app = web.Application()
@@ -105,9 +103,6 @@ class UI(Node):
         async for msg in ws:
             if msg.type == web.WSMsgType.TEXT:
                 await self._on_message(uuid, msg)
-        for subscription in self._clients[uuid]['subscriptions'].copy():
-            self._on_unsubscribe(uuid, subscription)
-        del self._clients[uuid]
         self._on_disconnect(uuid)
         return ws
 
@@ -131,6 +126,9 @@ class UI(Node):
 
 
     def _on_disconnect(self, uuid):
+        for subscription in self._clients[uuid]['subscriptions'].copy():
+            self._on_unsubscribe(uuid, subscription)
+        del self._clients[uuid]
         self.logger.debug('Disconnect: %s', uuid)
 
 
@@ -198,15 +196,35 @@ class UI(Node):
         if not uuid and not topic:
             # Broadcast to all clients
             for uuid in self._clients:
-                await self._clients[uuid]['socket'].send_str(message)
+                if self._is_alive(uuid):
+                    await self._clients[uuid]['socket'].send_str(message)
         if uuid:
             # Send to one client
-            await self._clients[uuid]['socket'].send_str(message)
+            if self._is_alive(uuid):
+                await self._clients[uuid]['socket'].send_str(message)
         if topic:
             # Send to all this topic's subscribers
             if topic in self._subscriptions:
                 for uuid in self._subscriptions[topic]:
-                    await self._clients[uuid]['socket'].send_str(message)
+                    if self._is_alive(uuid):
+                        await self._clients[uuid]['socket'].send_str(message)
+        self._dispose()
+
+
+    def _dispose(self):
+        """Get rid of dead connections"""
+        for uuid in self._clients.copy():
+            if not self._is_alive(uuid):
+                self._on_disconnect(uuid)
+
+
+    def _is_alive(self, uuid):
+        """Check if a socket is alive"""
+        # On Linux, client disconnections are not properly detected.
+        # This method should be used before each send_* to avoid (uncatchable) exceptions,
+        # memory leaks, and catastrophic failure.
+        # This is a hotfix while waiting for the issue to be resolved upstream.
+        return False if self._clients[uuid]['socket']._req.transport is None else True
 
 
     def _to_dict(self, data):
@@ -234,6 +252,8 @@ class UI(Node):
 
 
     async def _add_stream(self, name, channels):
+        if name in self._streams:
+            return
         self._streams[name] = channels
         await self._send('streams', self._streams)
 
@@ -262,8 +282,7 @@ class UI(Node):
                         'data': self._to_dict(port.data),
                         'meta': port.meta
                     }
-                    if name not in self._streams:
-                        self._run_safe(self._add_stream(stream, list(port.data.columns)))
+                    self._run_safe(self._add_stream(stream, list(port.data.columns)))
                     self._run_safe(self._send('stream', data, topic=stream))
         # Forward WebSocket streams to node output
         for name in self._buffer.keys():

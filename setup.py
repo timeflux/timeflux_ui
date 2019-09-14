@@ -11,7 +11,7 @@ with open('timeflux_ui/__init__.py') as f:
 
 DEPENDENCIES = [
     'aiohttp',
-    'python-socketio'
+    'timeflux @ git+https://github.com/timeflux/timeflux'
 ]
 
 setup(
@@ -24,8 +24,5 @@ setup(
     author='Pierre Clisson',
     author_email='contact@timeflux.io',
     url='https://timeflux.io',
-    install_requires=DEPENDENCIES,
-    dependency_links=[
-        'git+https://github.com/timeflux/timeflux'
-    ]
+    install_requires=DEPENDENCIES
 )

@@ -258,7 +258,11 @@ class UI(Node):
         await self._send('streams', self._streams)
 
 
-    async def _get_buffer(self, name):
+    async def _get_buffer_keys(self):
+        return list(self._buffer)
+
+
+    async def _get_buffer_value(self, name):
         data = self._buffer[name]['data']
         meta = self._buffer[name]['meta']
         self._buffer[name] = { 'data': {}, 'meta': None }
@@ -285,11 +289,15 @@ class UI(Node):
                     self._run_safe(self._add_stream(stream, list(port.data.columns)))
                     self._run_safe(self._send('stream', data, topic=stream))
         # Forward WebSocket streams to node output
-        for name in self._buffer.keys():
-            data, meta = self._run_safe(self._get_buffer(name))
-            if data or meta:
-                getattr(self, 'o_' + name).data = self._from_dict(data)
-                getattr(self, 'o_' + name).meta = meta
+        for name in self._run_safe(self._get_buffer_keys()):
+            try:
+                data, meta = self._run_safe(self._get_buffer_value(name))
+                if data or meta:
+                    getattr(self, 'o_' + name).data = self._from_dict(data)
+                    getattr(self, 'o_' + name).meta = meta
+            except KeyError:
+                # Buffer has changed
+                pass
 
 
     def terminate(self):

@@ -98,9 +98,10 @@ class IO {
   /**
    * Initialize the connection
    *
-   * @param {string} [uri=ws://localhost:8000] - WebSocket server address
+   * @param {string} [uri] - WebSocket server address
    */
-  constructor(uri = 'ws://localhost:8000') {
+  constructor(uri) {
+    if (uri === undefined) uri ='ws://' + window.location.host;
     this.uri = uri;
     this._connect = this._connect.bind(this);
     this._on_open = this._on_open.bind(this);

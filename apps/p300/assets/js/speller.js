@@ -197,20 +197,6 @@ class Speller {
     }
 
     /**
-     * Wait for some time.
-     *
-     * @param {number} duration - in millisecons
-     * @returns {Promise}
-     */
-    async wait(duration) {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                resolve(duration);
-            }, duration);
-        });
-    }
-
-    /**
      * Briefly focus on a symbol
      *
      * @param {int} symbol
@@ -218,12 +204,8 @@ class Speller {
     async focus(symbol, duration) {
         let element = document.getElementById('symbol_' + symbol);
         element.classList.add(this.options.classes.focus);
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                element.classList.remove(this.options.classes.focus);
-                resolve(true);
-            }, duration);
-        });
+        await sleep(duration);
+        element.classList.remove(this.options.classes.focus);
     }
 
     /**
@@ -232,8 +214,8 @@ class Speller {
      * @param {int} group
      */
     async flash(group, duration) {
-        asap((resolve, reject) => {
-            let elements = [];
+        let elements = [];
+        await asap(() => {
             for (let symbol of this.groups[group]) {
                 let element = document.getElementById('symbol_' + symbol);
                 elements.push(element);
@@ -241,14 +223,12 @@ class Speller {
             }
             let includes_target = this.status == 'testing' ? null : this.groups[group].includes(this.target);
             this.io.event('flash_begins', { group: group, includes_target: includes_target });
-            setTimeout(() => {
-                for (let element of elements) {
-                    element.classList.remove(this.options.classes.flash);
-                }
-                this.io.event('flash_ends');
-                resolve({group: group, duration, duration});
-            }, duration);
         });
+        await sleep(duration);
+        for (let element of elements) {
+            element.classList.remove(this.options.classes.flash);
+        }
+        this.io.event('flash_ends');
     }
 
     /**
@@ -266,14 +246,13 @@ class Speller {
                 this.options.durations.flash.min,
                 this.options.durations.flash.max
             ));
-            await this.wait(this._rand_range(
+            await sleep(this._rand_range(
                 this.options.durations.inter_flash.expectation,
                 this.options.durations.inter_flash.min,
                 this.options.durations.inter_flash.max
             ));
         }
         this.io.event('round_ends');
-        return Promise.resolve(true);
     }
 
     /**
@@ -285,7 +264,6 @@ class Speller {
         for (let i = 0; i < repetitions; i++) {
             await this.round();
         }
-        return Promise.resolve(true);
     }
 
     /**
@@ -301,12 +279,12 @@ class Speller {
         this.beep.play();
         this.trigger('baseline-eyes-open_begins');
         this.io.event('baseline-eyes-open_begins');
-        await this.wait(this.options.durations.baseline_eyes_open);
+        await sleep(this.options.durations.baseline_eyes_open);
         this.io.event('baseline-eyes-open_ends');
         this.beep.play();
         this.trigger('baseline-eyes-closed_begins');
         this.io.event('baseline-eyes-closed_begins');
-        await this.wait(this.options.durations.baseline_eyes_closed);
+        await sleep(this.options.durations.baseline_eyes_closed);
         this.io.event('baseline-eyes-closed_ends');
         this.io.event('training_begins', { targets: targets });
         for (let target of targets) {
@@ -316,7 +294,7 @@ class Speller {
             this.io.event('focus_begins', { target: this.target });
             await this.focus(this.target, this.options.durations.focus);
             this.io.event('focus_ends');
-            await this.wait(this.options.durations.inter_block);
+            await sleep(this.options.durations.inter_block);
             this.io.event('block_begins', { target: this.target });
             await this.block(this.options.repetitions);
             this.io.event('block_ends');
@@ -326,7 +304,6 @@ class Speller {
         this.io.event('training_ends');
         this.status = 'idle';
         this.io.event('calibration_ends');
-        return Promise.resolve(true);
     }
 
     /**
@@ -337,13 +314,12 @@ class Speller {
         this.status = 'testing';
         while (this.status == 'testing') {
             this.beep.play();
-            await this.wait(this.options.durations.inter_block);
+            await sleep(this.options.durations.inter_block);
             this.io.event('block_begins', { target: null });
             await this.block(this.options.repetitions);
             this.io.event('block_ends');
         }
         this.io.event('testing_ends');
-        return Promise.resolve(true);
     }
 
     /**

@@ -32,7 +32,6 @@ async function on_click() {
 
 function on_model(data, meta) {
     for (let row of Object.values(data)) {
-        console.log(row);
         switch (row.label) {
             case 'model-fitting_ends':
                 if (speller.status == 'idle') {

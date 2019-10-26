@@ -26,9 +26,9 @@ class Scheduler {
    * Initialize the scheduler
    *
    * @param {number} [rate] - rate in Hz (0 means each frame)
-   * @param {number} [duration] - duration in ms
+   * @param {number} [duration] - duration in ms (0 means infinite)
    */
-  constructor(rate = 0, duration = 1000) {
+  constructor(rate = 0, duration = 0) {
     this._frame = this._frame.bind(this);
     this.rate = rate;
     this.duration = duration;
@@ -59,17 +59,25 @@ class Scheduler {
    * Render
    */
   _frame(time_scheduled) {
+
+    // Init
     let time_called = performance.now();
     let ellapsed = time_called - this.time_tick;
     let fps = 1000 / (time_called - this.time_frame);
     this.time_frame = time_called;
-    if ((time_called - this.time_start) >= this.duration) {
+
+    // Stop the loop on timeout
+    if (this.duration > 0 && (time_called - this.time_start) >= this.duration) {
         this.stop();
     }
+
+    // Trigger tick event at constant rate
     if (ellapsed >= this.interval) {
         this.time_tick = time_called;
         this.trigger('tick', time_scheduled, time_called, ellapsed, fps);
     }
+
+    // Schedule next frame
     if (this.loop) {
         requestAnimationFrame(this._frame);
     }
@@ -345,8 +353,21 @@ function uuidv4() {
  * Same as Date.now(), but with microsecond precision
  */
 function microtime() {
-  return performance.now() + performance.timing.navigationStart
+  return performance.now() + performance.timing.navigationStart;
 }
+
+/**
+ * Do nothing for a while
+ *
+ * @param {number} duration - duration in milliseconds
+ * @returns {Promise}
+ */
+function sleep(duration) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, duration);
+  });
 
 /**
  * This function runs a callback at next screen refresh
@@ -355,9 +376,10 @@ function microtime() {
  * @returns {Promise}
  */
 function asap(callback) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     requestAnimationFrame(() => {
-      callback(resolve, reject)
+      callback();
+      resolve(true);
     });
   });
 }

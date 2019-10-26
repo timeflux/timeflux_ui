@@ -368,6 +368,7 @@ function sleep(duration) {
       resolve(true);
     }, duration);
   });
+}
 
 /**
  * This function runs a callback at next screen refresh

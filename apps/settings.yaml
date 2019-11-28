@@ -1,0 +1,16 @@
+graphs:
+
+  - nodes:
+    - id: settings
+      module: timeflux_ui.nodes.ui
+      class: UI
+      params:
+        routes:
+          settings: settings
+        settings:
+            foo: bar
+            meaning_of_life: 42
+            an_array: [ a, b, c]
+            an_object:
+                a: true
+                b: false

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Settings loading example</title>
+  </head>
+  <body>
+    <script>
+      async function load_settings() {
+          const response = await fetch('/settings.json');
+          const settings = await response.json();
+          return settings;
+      }
+      load_settings().then(settings => console.log(settings));
+    </script>
+  </body>
+</html>

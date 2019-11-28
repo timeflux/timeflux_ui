@@ -34,13 +34,14 @@ class UI(Node):
 
     """
 
-    def __init__(self, host='localhost', port=8000, routes={}, debug=False):
+    def __init__(self, host='localhost', port=8000, routes={}, settings={}, debug=False):
 
         """
         Args:
             host (string): The host to bind to.
             port (int): The port to listen to.
             routes (dict): A dictionary of custom web apps. Key is the name, value is the path.
+            settings (dict): An arbitrary configuration file that will be exposed to web apps.
             debug (bool): Show dependencies debug information.
         """
 
@@ -62,6 +63,7 @@ class UI(Node):
         app.add_routes([
             web.get('/', self._route_index),
             web.get('/ws', self._route_ws),
+            web.get('/settings.json', self._route_settings),
             web.get('/{default}', self._route_default)
         ])
 
@@ -74,6 +76,9 @@ class UI(Node):
             except ValueError:
                 pass
             app.add_routes([web.get(f'/{name}/', self._route_app)])
+
+        # Settings
+        self._settings = json.dumps(settings)
 
         # Do not block
         # https://stackoverflow.com/questions/51610074/how-to-run-an-aiohttp-server-in-a-thread
@@ -105,6 +110,10 @@ class UI(Node):
                 await self._on_message(uuid, msg)
         self._on_disconnect(uuid)
         return ws
+
+
+    async def _route_settings(self, request):
+        return web.Response(text=self._settings)
 
 
     async def _route_default(self, request):

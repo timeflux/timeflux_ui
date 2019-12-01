@@ -10,8 +10,9 @@ graphs:
           oddball: oddball
         settings:
           oddball:
-            photodiode:
-              enabled: false
+            session:
+              stims_per_block: 5
+              rest_duration: 1000
     - id: display
       module: timeflux.nodes.debug
       class: Display

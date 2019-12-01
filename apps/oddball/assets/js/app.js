@@ -14,6 +14,7 @@ load_settings().then(settings => {
     });
 });
 
+
 class Oddball {
 
     /**
@@ -106,11 +107,10 @@ class Oddball {
                 session_start_message: 'Press the button to start',
                 session_stop_message: 'Thanks!',
                 block_start_message: ''
-
             }
         };
 
-        this.options = Object.assign(default_options, options);
+        this.options = merge(default_options, options);
         this.io = io;
 
         // Create HTML elements

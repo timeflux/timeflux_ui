@@ -11,7 +11,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Schedule a repeating stimulus
+ * Schedule one-time tasks or repeating stimuli
  *
  * The following events are provided: tick, start, stop.
  *
@@ -30,8 +30,10 @@ class Scheduler {
    */
   constructor(rate = 0, duration = 0) {
     this._frame = this._frame.bind(this);
+    this.task = this.task.bind(this);
     this.rate = rate;
     this.duration = duration;
+    this.tasks = {};
   }
 
   /**
@@ -40,6 +42,7 @@ class Scheduler {
   start() {
     this.interval = this.rate == 0 ? 0 : (1 / this.rate) * 1000;
     this.loop = true;
+    this.ready = false;
     this.trigger('start', this.rate, this.duration);
     this.time_start = performance.now();
     this.time_tick = 0;
@@ -52,7 +55,37 @@ class Scheduler {
    */
   stop() {
     this.loop = false;
+    this.ready = false;
     this.trigger('stop');
+  }
+
+  /**
+   * Add a task to the scheduduler
+   *
+   * @param {taskCallback} callback - the task to execute
+   * @param {number} [after] - delay in ms after which the callback will be executed
+   * @returns {Promise}
+   **/
+  task(callback, after = 0) {
+    return new Promise((resolve, reject) => {
+      let at = this.time_start + after;
+      if (at in this.tasks === false) this.tasks[at] = [];
+      this.tasks[at].push({
+        'callback': callback,
+        'resolve': resolve,
+        'reject': reject
+      });
+    });
+  }
+
+  /**
+   * Syntaxic sugar for running a task as soon as possible
+   *
+   * @param {taskCallback} callback - the task to execute
+   * @returns {Promise}
+   */
+  asap(callback) {
+    return this.task(callback);
   }
 
   /**
@@ -71,19 +104,49 @@ class Scheduler {
         this.stop();
     }
 
+    // Run tasks
+    if (this.ready) {
+      for (let time_task in this.tasks) {
+        if ((time_called - this.time_start) >= time_task) {
+          for (let task of this.tasks[time_task]) {
+            task.callback(); // Run it now
+            task.resolve(); // Awaited promise will be resolved in the event loop
+          }
+          delete this.tasks[time_task];
+        }
+      }
+    }
+
     // Trigger tick event at constant rate
-    if (ellapsed >= this.interval) {
-        this.time_tick = time_called;
-        this.trigger('tick', time_scheduled, time_called, ellapsed, fps);
+    if (this.ready) {
+      if (ellapsed >= this.interval) {
+          this.time_tick = time_called;
+          this.trigger('tick', time_scheduled, time_called, ellapsed, fps);
+      }
     }
 
     // Schedule next frame
     if (this.loop) {
         requestAnimationFrame(this._frame);
     }
+
+    // /!\ Chrome bug fix /!\
+    // If the rAF callback pool is empty, the first frame will be ran at the end of
+    // the current event loop, without waiting for the actual painting, and therefore
+    // messing up with the timing. The following line states that the next frame is
+    // scheduled and that we are ready to execute the callbacks.
+    this.ready = true;
+
   }
 
+
 }
+
+/**
+ * This callback is displayed as part of the task method.
+ *
+ * @callback taskCallback
+ */
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -369,27 +432,3 @@ function sleep(duration) {
     }, duration);
   });
 }
-
-/**
- * This function runs a callback at next screen refresh
- *
- * @param {asapCallback}
- * @returns {Promise}
- */
-function asap(callback) {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      callback();
-      resolve(true);
-    });
-  });
-}
-
-/**
- * This callback is displayed as part of asap function.
- *
- * @callback asapCallback
- *
- * @param {resolve} - the resolve callback
- * @param {reject} - the reject callback
- */

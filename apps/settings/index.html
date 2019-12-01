@@ -7,11 +7,6 @@
   </head>
   <body>
     <script>
-      async function load_settings() {
-          const response = await fetch('/settings.json');
-          const settings = await response.json();
-          return settings;
-      }
       load_settings().then(settings => console.log(settings));
     </script>
   </body>

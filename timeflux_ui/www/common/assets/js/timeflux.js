@@ -68,7 +68,7 @@ class Scheduler {
    **/
   task(callback, after = 0) {
     return new Promise((resolve, reject) => {
-      let at = this.time_start + after;
+      let at = performance.now() + after;
       if (at in this.tasks === false) this.tasks[at] = [];
       this.tasks[at].push({
         'callback': callback,
@@ -107,7 +107,7 @@ class Scheduler {
     // Run tasks
     if (this.ready) {
       for (let time_task in this.tasks) {
-        if ((time_called - this.time_start) >= time_task) {
+        if (time_called >= time_task) {
           for (let task of this.tasks[time_task]) {
             task.callback(); // Run it now
             task.resolve(); // Awaited promise will be resolved in the event loop
@@ -428,6 +428,22 @@ function uuidv4() {
  */
 function microtime() {
   return performance.now() + performance.timing.navigationStart;
+}
+
+/**
+ * Merge two object recursively
+ *
+ * @param {Object} a
+ * @param {Object} b
+ * @returns {Object}
+ */
+function merge(a, b) {
+    if (Object(b) !== b) return b;
+    if (Object(a) !== a) a = {};
+    for (let key in b) {
+        a[key] = merge(a[key], b[key]);
+    }
+    return a;
 }
 
 /**

@@ -1,0 +1,21 @@
+graphs:
+
+  - nodes:
+    - id: oddball
+      module: timeflux_ui.nodes.ui
+      class: UI
+      params:
+        host: 0.0.0.0
+        routes:
+          oddball: oddball
+        settings:
+          oddball:
+            photodiode:
+              enabled: false
+    - id: display
+      module: timeflux.nodes.debug
+      class: Display
+    edges:
+      - source: oddball:events
+        target: display
+    rate: 5

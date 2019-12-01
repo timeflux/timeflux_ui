@@ -1,0 +1,74 @@
+graphs:
+
+  - nodes:
+      - id: app
+        module: timeflux_ui.nodes.ui
+        class: UI
+        params:
+          routes:
+            operator: operator
+          settings:
+            fields:
+              - label: Full Name
+                placeholder: Charlie
+                name: fullname
+                type: text
+                required: true
+              - label: Email
+                placeholder: charlie@timeflux.io
+                name: email
+                type: email
+              - label: Favorite color
+                name: color
+                type: color
+            events: [start, stop, observation]
+      - id: display_meta
+        module: timeflux.nodes.debug
+        class: Display
+      - id: display_events
+        module: timeflux.nodes.debug
+        class: Display
+      - id: pub_meta
+        module: timeflux.nodes.zmq
+        class: Pub
+        params:
+          topic: meta
+      - id: pub_events
+        module: timeflux.nodes.zmq
+        class: Pub
+        params:
+          topic: events
+    edges:
+      - source: app:events
+        target: display_events
+      - source: app:_
+        target: display_meta
+      - source: app:events
+        target: pub_events
+      - source: app:_
+        target: pub_meta
+
+  - id: recorder
+    nodes:
+    - id: subscribe
+      module: timeflux.nodes.zmq
+      class: Sub
+      params:
+        topics: [ events, meta ]
+    - id: save
+      module: timeflux.nodes.hdf5
+      class: Save
+      params:
+        path: .
+    edges:
+      - source: subscribe:events
+        target: save:events
+      - source: subscribe:meta
+        target: save:_
+    rate: 1
+
+  - id: broker
+    nodes:
+    - id: broker
+      module: timeflux.nodes.zmq
+      class: Broker

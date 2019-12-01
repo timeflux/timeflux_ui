@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Control center</title>
+    <link rel="stylesheet" href="/common/assets/css/bulma.min.css">
+</head>
+
+<body>
+    <section class="section">
+        <div class="container" id="app">
+            <h1 class="title is-centered">Control center</h1>
+
+            <div class="box">
+                <h2 class="subtitle">Send meta</h2>
+                <div id="meta">
+                    <template v-for="({type, name, label, placeholder, required}) in fields">
+                        <div class="field is-horizontal">
+                            <div class="field-label is-normal">
+                                <label class="label"
+                                    :for="name"
+                                    :key="`label-${name}`"
+                                >{{label}}</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control is-expanded">
+                                        <input class="input" v-if="type !== 'textarea'"
+                                               :type="type" :name="name"
+                                               :placeholder="placeholder"
+                                               v-model="metaData[name]"
+                                               :key="`field-${label}`"
+                                               autocomplete="off"
+                                               :required="`field-${required}`">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div class="field is-horizontal">
+                        <div class="field-label"></div>
+                        <div class="field-body">
+                            <div class="control">
+                                <button v-on:click="send_meta" class="button is-info">
+                                    Submit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="box">
+                <h2 class="subtitle">Send events</h2>
+                <div id="events">
+                    <div class="field has-addons">
+                        <div class="control">
+                            <div class="select">
+                                <select v-model="eventData.label">
+                                    <option v-for="event in events">
+                                        {{event}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="control is-expanded">
+                            <input v-model="eventData.data" class="input" type="text" placeholder="">
+                        </div>
+                        <div class="control">
+                            <button v-on:click="send_event" class="button is-info">
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</body>
+
+<script src="/common/assets/js/vue.js"></script>
+<script src="/common/assets/js/timeflux.js"></script>
+<script src="assets/app.js"></script>
+
+</html>

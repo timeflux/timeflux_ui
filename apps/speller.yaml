@@ -6,7 +6,10 @@ graphs:
       class: UI
       params:
         routes:
-          p300: p300
+          speller: speller
+        settings:
+          speller:
+            targets: HELLOTIMEFLUX
     - id: display
       module: timeflux.nodes.debug
       class: Display

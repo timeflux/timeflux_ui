@@ -91,6 +91,8 @@ class Speller {
         window.onbeforeunload = () => {
             this.io.event('session_ends');
         }
+        this.scheduler = new Scheduler();
+        this.scheduler.start();
     }
 
     /**
@@ -215,7 +217,7 @@ class Speller {
      */
     async flash(group, duration) {
         let elements = [];
-        await asap(() => {
+        await this.scheduler.asap(() => {
             for (let symbol of this.groups[group]) {
                 let element = document.getElementById('symbol_' + symbol);
                 elements.push(element);

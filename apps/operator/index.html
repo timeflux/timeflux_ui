@@ -14,7 +14,7 @@
 
             <div class="box">
                 <h2 class="subtitle">Send meta</h2>
-                <div id="meta">
+                <div>
                     <template v-for="({type, name, label, placeholder, required}) in fields">
                         <div class="field is-horizontal">
                             <div class="field-label is-normal">
@@ -43,7 +43,7 @@
                         <div class="field-label"></div>
                         <div class="field-body">
                             <div class="control">
-                                <button v-on:click="send_meta" class="button is-info">
+                                <button v-on:click="send_meta" class="button" :class="metaButtonClass" :disabled="metaButtonDisabled">
                                     Submit
                                 </button>
                             </div>
@@ -55,7 +55,7 @@
 
             <div class="box">
                 <h2 class="subtitle">Send events</h2>
-                <div id="events">
+                <div>
                     <div class="field has-addons">
                         <div class="control">
                             <div class="select">
@@ -70,12 +70,17 @@
                             <input v-model="eventData.data" class="input" type="text" placeholder="">
                         </div>
                         <div class="control">
-                            <button v-on:click="send_event" class="button is-info">
+                            <button v-on:click="send_event" class="button" :class="eventButtonClass">
                                 Submit
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="box">
+                <h2 class="subtitle">Receive events</h2>
+                <pre>{{received}}</pre>
             </div>
 
         </div>

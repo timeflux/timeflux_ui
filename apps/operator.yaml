@@ -21,7 +21,7 @@ graphs:
               - label: Favorite color
                 name: color
                 type: color
-            events: [start, stop, observation]
+            events: [ start, stop, observation ]
       - id: display_meta
         module: timeflux.nodes.debug
         class: Display
@@ -60,11 +60,12 @@ graphs:
       class: Save
       params:
         path: .
+        min_itemsize: 100
     edges:
       - source: subscribe:events
         target: save:events
       - source: subscribe:meta
-        target: save:_
+        target: save
     rate: 1
 
   - id: broker

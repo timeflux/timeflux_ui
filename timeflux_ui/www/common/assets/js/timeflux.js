@@ -289,6 +289,18 @@ class IO {
   }
 
   /**
+   * Syntaxic sugar to send data on the special meta stream
+   *
+   * @param {Object} data
+   * @returns {boolean}
+   */
+  meta(data) {
+    meta = JSON.stringify(data);
+    this.commit('_', null);
+    return this.publish('_', meta);
+  }
+
+  /**
    * Sync to master clock
    */
   sync() {
@@ -431,4 +443,17 @@ function sleep(duration) {
       resolve(true);
     }, duration);
   });
+}
+
+/**
+ * Load settings
+ *
+ * Use like this: load_settings().then(settings => { doSomething(); });
+ *
+ * @returns {Promise<Object>} a promise that contains the settings object
+ */
+async function load_settings() {
+    const response = await fetch('/settings.json');
+    const settings = await response.json();
+    return settings;
 }

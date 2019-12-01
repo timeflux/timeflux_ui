@@ -20,7 +20,6 @@ load_settings().then(settings => {
             fields: settings.fields,
             events: settings.events,
             received: ''
-
         },
         created() {
             io.subscribe('events');

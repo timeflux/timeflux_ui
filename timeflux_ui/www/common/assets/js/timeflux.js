@@ -295,9 +295,8 @@ class IO {
    * @returns {boolean}
    */
   meta(data) {
-    meta = JSON.stringify(data);
-    this.commit('_', null);
-    return this.publish('_', meta);
+    this.buffer['_'] = {};
+    return this.publish('_', data);
   }
 
   /**

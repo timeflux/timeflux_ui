@@ -192,12 +192,14 @@ class UI(Node):
 
 
     async def _on_publish(self, name, data, meta):
-        if data and name not in self._streams:
-            channels = list(list(data.values())[0].keys())
+        if name not in self._streams:
+            channels = list(list(data.values())[0].keys()) if data else []
             await self._add_stream(name, channels)
             self._buffer[name] = { 'data': {}, 'meta': None }
-        self._buffer[name]['data'].update(data)
-        self._buffer[name]['meta'] = meta
+        if data:
+            self._buffer[name]['data'].update(data)
+        if meta:
+            self._buffer[name]['meta'] = meta
 
 
     async def _send(self, command, payload, uuid=None, topic=None):

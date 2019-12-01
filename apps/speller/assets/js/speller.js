@@ -73,7 +73,7 @@ class Speller {
             },
 
         };
-        this.options = Object.assign(default_options, options);
+        this.options = merge(default_options, options);
         this.beep = new Audio('assets/wav/beep.wav');
         this.io = new IO();
         this._make_grid();

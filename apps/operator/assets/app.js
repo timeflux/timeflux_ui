@@ -17,8 +17,8 @@ load_settings().then(settings => {
             eventButtonClass: 'is-info',
             metaData: {},
             eventData: {},
-            fields: settings.fields,
-            events: settings.events,
+            fields: settings.operator.fields,
+            events: settings.operator.events,
             received: ''
         },
         created() {

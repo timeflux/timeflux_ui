@@ -8,20 +8,21 @@ graphs:
           routes:
             operator: operator
           settings:
-            fields:
-              - label: Full Name
-                placeholder: Charlie
-                name: fullname
-                type: text
-                required: true
-              - label: Email
-                placeholder: charlie@timeflux.io
-                name: email
-                type: email
-              - label: Favorite color
-                name: color
-                type: color
-            events: [ start, stop, observation ]
+            operator:
+              fields:
+                - label: Full Name
+                  placeholder: Charlie
+                  name: fullname
+                  type: text
+                  required: true
+                - label: Email
+                  placeholder: charlie@timeflux.io
+                  name: email
+                  type: email
+                - label: Favorite color
+                  name: color
+                  type: color
+              events: [ start, stop, observation ]
       - id: display_meta
         module: timeflux.nodes.debug
         class: Display

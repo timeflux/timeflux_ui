@@ -1,0 +1,75 @@
+graphs:
+
+  - id: demo
+    nodes:
+    - id: stream_1
+      module: timeflux.nodes.random
+      class: Random
+      params:
+        columns: 8
+        rows_min: 10
+        rows_max: 10
+        value_min: -100
+        value_max: 100
+        seed: 1
+    - id: stream_2
+      module: timeflux.nodes.random
+      class: Random
+      params:
+        columns: 2
+        rows_min: 1
+        rows_max: 1
+        value_min: -100
+        value_max: 100
+        seed: 1
+    - id: sqi
+      module: timeflux.nodes.random
+      class: Random
+      params:
+        names: [P7, P4, Cz, Pz, P3, P8, O1, O2, T8, F8, C4, F4, Fp2, Fz, C3, F3, Fp1, T7, F7, OZ, PO4, FC6, FC2, AF4, CP6, CP2, CP1, CP5, FC1, FC5, AF3, PO3]
+        value_min: 0
+        value_max: 2
+    - id: ui
+      module: timeflux_ui.nodes.ui
+      class: UI
+      params:
+        routes:
+          demo: demo
+          operator: operator
+          sqi: sqi
+          speller: speller
+          oddball: oddball
+          stim: stim
+        settings:
+          speller:
+            durations:
+              baseline_eyes_open: 5000
+              baseline_eyes_closed: 5000
+          operator:
+            fields:
+              - label: Full Name
+                placeholder: Charlie
+                name: fullname
+                type: text
+                required: true
+              - label: Email
+                placeholder: charlie@timeflux.io
+                name: email
+                type: email
+              - label: Favorite color
+                name: color
+                type: color
+            events: [ start, stop, observation ]
+    - id: display
+      module: timeflux.nodes.debug
+      class: Display
+    edges:
+      - source: stream_1
+        target: ui:test_1
+      - source: stream_2
+        target: ui:test_2
+      - source: sqi
+        target: ui:sqi
+      - source: ui:events
+        target: display
+    rate: 5

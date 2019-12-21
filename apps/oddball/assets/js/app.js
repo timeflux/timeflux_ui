@@ -110,8 +110,10 @@ class Oddball {
             }
         };
 
+        // Merge options and send them as meta
         this.options = merge(default_options, options);
         this.io = io;
+        this.io.meta(this.options);
 
         // Create HTML elements
         this.container = document.createElement('div');

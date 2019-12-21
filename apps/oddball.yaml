@@ -13,10 +13,15 @@ graphs:
             session:
               stims_per_block: 5
               rest_duration: 1000
-    - id: display
+    - id: display_events
+      module: timeflux.nodes.debug
+      class: Display
+    - id: display_meta
       module: timeflux.nodes.debug
       class: Display
     edges:
       - source: oddball:events
-        target: display
+        target: display_events
+      - source: oddball:_
+        target: display_meta
     rate: 5

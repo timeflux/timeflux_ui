@@ -68,7 +68,10 @@ class UI(Node):
         ])
 
         # Apps
-        self._routes = { 'monitor': self._root + '/monitor' }
+        self._routes = {
+            'monitor': self._root + '/monitor',
+            'operator': self._root + '/operator',
+        }
         self._routes.update(routes)
         for name, path in self._routes.items():
             try:

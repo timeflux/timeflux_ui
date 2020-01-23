@@ -1,0 +1,17 @@
+html, body, #container {
+    height: 100%;
+    padding: 0;
+}
+
+#container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#circle {
+    background-color: red;
+    width: 50%;
+    height: 50%;
+    border-radius: 50%;
+}

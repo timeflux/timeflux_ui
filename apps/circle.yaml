@@ -1,0 +1,19 @@
+graphs:
+  - id: test
+    nodes:
+    - id: random
+      module: timeflux.nodes.random
+      class: Random
+      params:
+        names: [ value ]
+        value_min: 0
+        value_max: 1
+    - id: ui
+      module: timeflux_ui.nodes.ui
+      class: UI
+      params:
+        routes:
+          circle: circle
+    edges:
+      - source: random
+        target: ui:level

@@ -1,0 +1,118 @@
+graphs:
+
+  - id: OpenBCI
+    nodes:
+    - id: acquire
+      module: timeflux_openbci.nodes.driver
+      class: OpenBCI
+      params:
+        board: cyton
+        serial_port: /dev/cu.usbserial-DQ0084BO
+        channels: [ Fpz, AF7, AF8, Oz, O1, O2, P7, P8 ]
+        debug: false
+    - id: bandpass
+      module: timeflux_dsp.nodes.filters
+      class: IIRFilter
+      params:
+        rate: 250
+        order: 3
+        frequencies: [1, 40]
+    - id: pub_raw
+      module: timeflux.nodes.zmq
+      class: Pub
+      params:
+        topic: eeg_raw
+    - id: pub_filtered
+      module: timeflux.nodes.zmq
+      class: Pub
+      params:
+        topic: eeg_filtered
+    edges:
+    - source: acquire
+      target: pub_raw
+    - source: acquire
+      target: bandpass
+    - source: bandpass
+      target: pub_filtered
+    rate: 10
+
+  - nodes:
+    - id: ui
+      module: timeflux_ui.nodes.ui
+      class: UI
+      params:
+        routes:
+          flicker: flicker
+        settings:
+          flicker:
+            grid:
+              rows: 5
+              columns: 9
+            calibration:
+              baseline_duration: 60000
+              focus_duration: 7000
+              rounds: 8
+            highlight_duration: 3000
+            targets:
+              cell_0_0: 6.66
+              cell_0_8: 12
+              cell_2_4: 0
+              cell_4_0: 20
+              cell_4_8: 30
+    - id: publish
+      module: timeflux.nodes.zmq
+      class: Pub
+      params:
+        topic: events
+    - id: subscribe
+      module: timeflux.nodes.zmq
+      class: Sub
+      params:
+        topics: [ eeg_filtered ]
+    edges:
+      - source: ui:events
+        target: publish
+      - source: subscribe:eeg_filtered
+        target: ui:eeg
+    rate: 30
+
+  - id: display
+    nodes:
+    - id: subscribe
+      module: timeflux.nodes.zmq
+      class: Sub
+      params:
+        topics: [ events ]
+    - id: debug
+      module: timeflux.nodes.debug
+      class: Display
+    edges:
+      - source: subscribe:events
+        target: debug
+    rate: 1
+
+  - id: recorder
+    nodes:
+    - id: subscribe
+      module: timeflux.nodes.zmq
+      class: Sub
+      params:
+        topics: [ events, eeg_raw ]
+    - id: save
+      module: timeflux.nodes.hdf5
+      class: Save
+      params:
+        path: .
+        min_itemsize: 50
+    edges:
+      - source: subscribe:events
+        target: save:events
+      - source: subscribe:eeg_raw
+        target: save:eeg
+    rate: 1
+
+  - id: broker
+    nodes:
+    - id: broker
+      module: timeflux.nodes.zmq
+      class: Broker

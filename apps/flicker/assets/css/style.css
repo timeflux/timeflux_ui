@@ -1,0 +1,44 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    background-color: black;
+}
+
+table {
+    height: 100%;
+    width: 100%;
+    border-spacing: 30px;
+}
+
+td {
+    text-align: center;
+    padding: : 50px;
+}
+
+td.highlight {
+    background-color: white;
+}
+
+.center {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.hidden {
+    display: none;
+}
+
+.button {
+    cursor: pointer;
+    background-color: grey;
+    border: none;
+    color: white;
+    padding: 16px 32px;
+    font-size: 16px;
+}
+
+.quiet {
+    cursor: none;
+}

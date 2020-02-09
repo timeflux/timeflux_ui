@@ -18,6 +18,9 @@
  * Tested in Chrome (MacOS). Other browsers may have imprecise timestamps. More tests
  * will soon be available. Avoid switching tabs when a stim is running.
  *
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Performance/now#Reduced_time_precision}
+ * @see {@link https://github.com/w3c/hr-time/issues/56}
+ *
  * @mixes Dispatcher
  */
 class Scheduler {
@@ -97,6 +100,7 @@ class Scheduler {
     let time_called = performance.now();
     let ellapsed = time_called - this.time_tick;
     let fps = 1000 / (time_called - this.time_frame);
+    let tolerance = (time_called - this.time_frame) / 3; // One third of a frame
     this.time_frame = time_called;
 
     // Stop the loop on timeout
@@ -119,7 +123,7 @@ class Scheduler {
 
     // Trigger tick event at constant rate
     if (this.ready) {
-      if (ellapsed >= this.interval) {
+      if ((ellapsed + tolerance) >= this.interval) {
           this.time_tick = time_called;
           this.trigger('tick', time_scheduled, time_called, ellapsed, fps);
       }

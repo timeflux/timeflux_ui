@@ -112,7 +112,7 @@ class Flicker {
                 let id = 'cell_' + i + '_' + j;
                 cell.classList.add(this.options.class);
                 cell.setAttribute('id', id);
-                cell.innerHTML = id;
+                //cell.innerHTML = id;
                 row.appendChild(cell);
             }
             grid.appendChild(row);

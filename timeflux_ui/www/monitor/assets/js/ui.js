@@ -1,7 +1,18 @@
+var options = {
+  minValue: undefined,
+  maxValue: undefined,
+  millisPerPixel: 10,
+  interpolation: 'linear'
+};
+
+var charts = {};
+var series = {};
+
 var io = new IO();
 
-var charts = {}
-var series = {}
+load_settings().then(settings => {
+  options = merge(options, settings.monitor);
+});
 
 var Chart = Vue.extend({
   data: function() {
@@ -135,7 +146,9 @@ function create_chart(id, stream, channels, theme) {
       'grid': '#dbdbdb'
     }
   }
-  options = {
+  charts[id] = new SmoothieChart({
+    minValue: options.minValue,
+    maxValue: options.maxValue,
     maxValueScale: 1.2,
     minValueScale: 1.2,
     grid: {
@@ -145,8 +158,7 @@ function create_chart(id, stream, channels, theme) {
       borderVisible: false
     },
     responsive: true,
-    millisPerPixel: 10,
-    limitFPS: 50,
+    millisPerPixel: options.millisPerPixel,
     labels: {
       fillStyle: themes[theme].foreground
     },
@@ -156,9 +168,8 @@ function create_chart(id, stream, channels, theme) {
       fontSize: 21,
       verticalAlign: 'top'
     },
-    interpolation: 'bezier'
-  };
-  charts[id] = new SmoothieChart(options);
+    interpolation: options.interpolation
+  });
   charts[id].streamTo(document.getElementById(id), 1000);
   for (channel of channels) {
     charts[id].addTimeSeries(series[stream][channel]['instance'], { strokeStyle: themes[theme]['foreground'], lineWidth: 2 });

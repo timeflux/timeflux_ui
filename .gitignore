@@ -4,7 +4,12 @@
 __pycache__
 *.py[cod]
 *$py.class
-doc/api
-doc/build
 *.egg-info
+build/
+dist/
 .idea
+.coverage
+
+doc/*
+!doc/static
+!doc/doc

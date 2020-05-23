@@ -47,7 +47,9 @@ class UI(Node):
             debug (bool): Show dependencies debug information.
         """
 
-        self._root = os.path.join(os.path.dirname(__file__), "../www")
+        self._root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "www")
+        )
         self._clients = {}
         self._subscriptions = {}
         self._streams = {}

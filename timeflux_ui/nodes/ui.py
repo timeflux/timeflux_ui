@@ -107,7 +107,9 @@ class UI(Node):
                 full_path = os.path.join(base, path)
                 if os.path.isdir(full_path):
                     return full_path
-        raise WorkerLoadError(f"Directory `{path}` could not be found in the search path.")
+        raise WorkerLoadError(
+            f"Directory `{path}` could not be found in the search path."
+        )
 
     def _run(self, server):
         self._loop.run_until_complete(server)

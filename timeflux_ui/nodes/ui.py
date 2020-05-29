@@ -1,4 +1,5 @@
 import logging
+import sys
 import os
 import json
 import numpy as np
@@ -8,6 +9,7 @@ from aiohttp import web
 from threading import Thread
 from timeflux.helpers import clock
 from timeflux.core.node import Node
+from timeflux.core.exceptions import WorkerLoadError
 
 
 class UI(Node):
@@ -75,7 +77,8 @@ class UI(Node):
 
         # Apps
         self._routes = {"monitor": self._root + "/monitor"}
-        self._routes.update(routes)
+        for name, path in routes.items():
+            self._routes[name] = self._find_path(path)
         for name, path in self._routes.items():
             try:
                 app.router.add_static(f"/{name}/assets/", f"{path}/assets")
@@ -93,6 +96,18 @@ class UI(Node):
         server = self._loop.create_server(handler, host=host, port=port)
         Thread(target=self._run, args=(server,)).start()
         self.logger.info("UI available at http://%s:%d" % (host, port))
+
+    def _find_path(self, path):
+        path = os.path.normpath(path)
+        if os.path.isabs(path):
+            if os.path.isdir(path):
+                return path
+        else:
+            for base in sys.path:
+                full_path = os.path.join(base, path)
+                if os.path.isdir(full_path):
+                    return full_path
+        raise WorkerLoadError(f"Directory `{path}` could not be found in the search path.")
 
     def _run(self, server):
         self._loop.run_until_complete(server)

@@ -2,14 +2,22 @@
 
 let io = new IO();
 
-let audio_context = window.AudioContext || window.webkitAudioContext;
-let audio = new audio_context();
-let button = document.getElementById('start');
+const button = document.getElementById('start');
+
+const synth = new Tone.Synth({
+  oscillator: {
+    type: 'triangle'
+  },
+  envelope: {
+    attack: 0.001,
+    release: 0.001
+  }
+}).toMaster()
 
 load_settings().then(settings => {
+    let oddball = new Oddball(io, settings.oddball);
     button.addEventListener('click', () => {
-        button.classList.toggle('hidden');
-        let oddball = new Oddball(io, settings.oddball);
+        if (Tone.context.state === 'suspended') Tone.start();
         oddball.start();
     });
 });
@@ -54,6 +62,7 @@ class Oddball {
      * @param {Object} [session]
      * @param {number} [session.blocks_per_session] - number of blocks per session
      * @param {number} [session.stims_per_block] - number of stims per block
+     * @param {number} [session.prep_duration] - preparation duration before session starts, in ms
      * @param {number} [session.rest_duration] - rest duration between blocks, in ms
      * @param {string} [session.session_start_message] - NOT IMPLEMENTED
      * @param {string} [session.session_stop_message] - NOT IMPLEMENTED
@@ -103,6 +112,7 @@ class Oddball {
             session: {
                 blocks_per_session: 3,
                 stims_per_block: 50,
+                prep_duration: 3000,
                 rest_duration: 10000,
                 session_start_message: 'Press the button to start',
                 session_stop_message: 'Thanks!',
@@ -149,12 +159,14 @@ class Oddball {
     }
 
     async start() {
+        button.classList.toggle('hidden');
         this.scheduler.start();
         this.container.classList.toggle('hidden');
         this.marker.classList.toggle('hidden');
         if (this.options.photodiode.enabled) {
             this.photodiode.classList.toggle('hidden');
         }
+        await sleep(this.options.session.prep_duration);
         this.io.event('session_begins');
         for (let block = 0; block < this.options.session.blocks_per_session; block++) {
             this.io.event('block_begins');
@@ -165,7 +177,6 @@ class Oddball {
                 this.io.event('stim_begins', { on: duration_on, off: duration_off, deviant: deviant });
                 let now = performance.now();
                 await this.scheduler.asap(() => {
-                    console.log(performance.now() - now);
                     if (this.options.visual.enabled) {
                         this.container.classList.add(deviant ? 'odd' : 'on');
                         this.container.classList.remove('off');
@@ -207,7 +218,9 @@ class Oddball {
             }
             this.container.classList.remove('off');
             this.io.event('block_ends');
-            await sleep(this.options.session.rest_duration);
+            if (block + 1 < this.options.session.blocks_per_session) {
+                await sleep(this.options.session.rest_duration);
+            }
         }
         this.io.event('session_ends');
         this.container.classList.toggle('hidden');
@@ -240,6 +253,7 @@ class Oddball {
 
 }
 
+
 /**
  * Set a CSS variable
  *
@@ -260,16 +274,8 @@ function get_css_var(name) {
 }
 
 
-function beep(vol, freq, duration) {
-  let osc = audio.createOscillator();
-  let gain = audio.createGain();
-  osc.connect(gain);
-  osc.frequency.value = freq;
-  osc.type = 'triangle';
-  gain.connect(audio.destination);
-  gain.gain.value= vol;
-  osc.start(audio.currentTime);
-  osc.stop(audio.currentTime + duration * 0.001);
+function beep(volume, frequency, duration) {
+    synth.triggerAttackRelease(frequency, duration / 1000, undefined, volume);
 }
 
 

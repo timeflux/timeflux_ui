@@ -16,6 +16,6 @@
 
 .button.is-rounded.is-icon {
     margin-left: .375rem;
-    padding-left: .75em;
-    padding-right: .75em;
+    padding-left: 1em;
+    padding-right: 1em;
 }

@@ -1,8 +1,10 @@
 var options = {
   minValue: undefined,
   maxValue: undefined,
+  lineWidth: 2,
   millisPerPixel: 10,
-  interpolation: 'linear'
+  interpolation: 'linear',
+  events: [ 'start', 'stop', 'pause', 'resume', 'observation']
 };
 
 var charts = {};
@@ -10,9 +12,6 @@ var series = {};
 
 var io = new IO();
 
-load_settings().then(settings => {
-  options = merge(options, settings.monitor);
-});
 
 var Chart = Vue.extend({
   data: function() {
@@ -49,7 +48,6 @@ var Chart = Vue.extend({
   }
 });
 
-
 var app = new Vue({
   el: '#app',
   data: {
@@ -58,7 +56,7 @@ var app = new Vue({
     selected_channel: undefined,
     selected_event: undefined,
     event_data: undefined,
-    events: [ 'start', 'stop', 'pause', 'resume', 'observation'],
+    events: options.events,
     streams: {}
   },
   methods: {
@@ -151,7 +149,7 @@ function create_chart(id, stream, channels, theme) {
     maxValue: options.maxValue,
     maxValueScale: 1.2,
     minValueScale: 1.2,
-    grid: {
+    grid: {
       strokeStyle: themes[theme]['grid'],
       fillStyle: themes[theme]['background'],
       sharpLines: true,
@@ -172,7 +170,7 @@ function create_chart(id, stream, channels, theme) {
   });
   charts[id].streamTo(document.getElementById(id), 1000);
   for (channel of channels) {
-    charts[id].addTimeSeries(series[stream][channel]['instance'], { strokeStyle: themes[theme]['foreground'], lineWidth: 2 });
+    charts[id].addTimeSeries(series[stream][channel]['instance'], { strokeStyle: themes[theme]['foreground'], lineWidth: options.lineWidth });
   }
 }
 
@@ -202,4 +200,13 @@ io.on('stream', function(payload){
 
 io.on('streams', function(payload) {
   app.streams = payload;
+});
+
+
+load_settings().then(settings => {
+  options = merge(options, settings.monitor);
+  if (settings.monitor.events ) {
+    options.events = settings.monitor.events;
+    app.events = options.events;
+  }
 });

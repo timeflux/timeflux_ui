@@ -14,13 +14,16 @@
       <nav class="navbar is-fixed-top is-dark">
         <div class="navbar-brand">
           <a class="navbar-item" href="https://timeflux.io">
+            <img src="assets/img/timeflux_logo_white.png" alt="Timeflux Monitor">
+            <!--
             <span><i class="fas fa-lg fa-signature"></i></span>&nbsp;<strong>Timeflux Monitor</strong>
+          -->
           </a>
         </div>
         <div class="navbar-menu">
           <div class="navbar-end">
             <p class="navbar-item ">
-              v0.1
+              v0.2
             </p>
             <p class="navbar-item ">
               <span class="icon" v-bind:class="[connected ? 'has-text-success' : 'has-text-danger']">
@@ -118,11 +121,15 @@
               <button v-on:click="remove_chart" class="button is-icon is-dark is-outlined is-rounded is-small is-pulled-right">
                 <span class="icon"><i class="fa fa-times"></i></span>
               </button>
+              <!--
               <button v-on:click="toggle = !toggle" class="button is-icon is-dark is-outlined is-rounded is-small is-pulled-right">
                 <span class="icon"><i class="fa fa-wrench"></i></span>
               </button>
+            -->
             </div>
+            <!--
             <div v-show="toggle" class="panel-block chart-settings">[Settings]</div>
+            -->
             <div class="panel-block chart-series">
               <div>
                 <div v-for="id in ids">

@@ -1,7 +1,7 @@
 var options = {
   minValue: undefined,
   maxValue: undefined,
-  lineWidth: 2,
+  lineWidth: 1,
   millisPerPixel: 10,
   interpolation: 'linear',
   events: [ 'start', 'stop', 'pause', 'resume', 'observation']
@@ -147,8 +147,8 @@ function create_chart(id, stream, channels, theme) {
   charts[id] = new SmoothieChart({
     minValue: options.minValue,
     maxValue: options.maxValue,
-    maxValueScale: 1.2,
-    minValueScale: 1.2,
+    maxValueScale: 1,
+    minValueScale: 1,
     grid: {
       strokeStyle: themes[theme]['grid'],
       fillStyle: themes[theme]['background'],

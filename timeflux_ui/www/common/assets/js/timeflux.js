@@ -479,6 +479,24 @@ function sleep(duration) {
 }
 
 /**
+ * Resolve promise on keypress
+ *
+ * @param {number} code - key code
+ * @returns {Promise}
+ */
+function key(code) {
+  return new Promise((resolve) => {
+    const handler = (event) => {
+      if (code === undefined || event.keyCode === code) {
+        document.removeEventListener(event.type, handler);
+        resolve(true);
+      }
+    };
+    document.addEventListener('keydown', handler);
+  });
+}
+
+/**
  * Load settings
  *
  * Use like this: load_settings().then(settings => { doSomething(); });

@@ -200,7 +200,7 @@ class IO {
    * @returns {boolean}
    */
   send(command, payload) {
-    try {
+    try{
       let message = JSON.stringify({command: command, payload: payload});
       this.socket.send(message);
     } catch {
@@ -419,6 +419,7 @@ Object.assign(IO.prototype, Dispatcher);
 
 /**
  * RFC-compliant UUID
+ *
  * @see {@link https://www.ietf.org/rfc/rfc4122.txt}
  */
 function uuidv4() {
@@ -433,6 +434,25 @@ function uuidv4() {
 function microtime() {
   return performance.now() + performance.timing.navigationStart;
 }
+
+/**
+ * Same as Date.now(), but with microsecond precision
+ *
+ * To offer protection against timing attacks and fingerprinting, the precision of performance.now()
+ * might get rounded depending on browser settings. Currently, the resolution is 5μs in Chrome.
+ * To avoid collisions, we add 1μs if two consecutive timestamps are identical.
+ *
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Performance/now}
+ * @see {@link https://hal.inria.fr/hal-03215569/document}
+ * @see {@link https://gruss.cc/files/fantastictimers.pdf}
+ */
+function microtime() {
+  let ts = performance.now();
+  if (ts <= globalThis._last_microtime) ts = globalThis._last_microtime + 1e-3;
+  globalThis._last_microtime = ts;
+  return ts + performance.timing.navigationStart;
+}
+
 
 /**
 * Performs a deep merge of objects and returns new object. Does not modify

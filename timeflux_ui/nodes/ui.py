@@ -39,7 +39,6 @@ class UI(Node):
     def __init__(
         self, host="localhost", port=8000, routes={}, settings={}, debug=False
     ):
-
         """
         Args:
             host (string): The host to bind to.

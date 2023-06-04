@@ -517,6 +517,32 @@ function key(code) {
 }
 
 /**
+ * Resolve promise on event
+ *
+ * @param {string} name - event name
+ * @returns {Promise}
+ */
+function flag(name) {
+  return new Promise((resolve) => {
+    const handler = (event) => {
+      document.removeEventListener(event.type, handler);
+      resolve(event.detail);
+    };
+    document.addEventListener(name, handler);
+  });
+}
+
+/**
+ * Trigger an event
+ *
+ * @param {string} name - Event name
+ * @param {object} [data] - Optional data
+ */
+function trigger(name, data) {
+  document.dispatchEvent(new CustomEvent(name, { detail: data }));
+}
+
+/**
  * Load settings
  *
  * Use like this: load_settings().then(settings => { doSomething(); });

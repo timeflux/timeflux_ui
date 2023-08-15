@@ -253,7 +253,9 @@ class UI(Node):
         # probably impacting memory. This should be investigated further.
         # See: https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
         data = data.copy()  # Remove?
-        data["index"] = (data.index.values.astype("datetime64[ns]").astype(np.float64) / 1e6).astype(
+        data["index"] = (
+            data.index.values.astype("datetime64[ns]").astype(np.float64) / 1e6
+        ).astype(
             np.int64
         )  # from ns to ms
         data.drop_duplicates(

@@ -205,7 +205,7 @@ io.on('streams', function(payload) {
 
 load_settings().then(settings => {
   options = merge(options, settings.monitor);
-  if (settings.monitor.events ) {
+  if (settings.monitor && settings.monitor.events) {
     options.events = settings.monitor.events;
     app.events = options.events;
   }

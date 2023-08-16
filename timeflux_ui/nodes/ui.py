@@ -268,7 +268,6 @@ class UI(Node):
     def _from_dict(self, data):
         try:
             data = pd.DataFrame.from_dict(data, orient="index")
-            print(data.index)
             data.index = pd.to_datetime(data.index.astype(np.float64), unit="ms")
         except ValueError:
             self.logger.warn("Invalid stream data")

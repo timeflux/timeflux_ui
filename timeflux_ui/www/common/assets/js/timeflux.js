@@ -200,12 +200,9 @@ class IO {
    * @returns {boolean}
    */
   send(command, payload) {
-    try{
-      let message = JSON.stringify({command: command, payload: payload});
-      this.socket.send(message);
-    } catch {
-      return false;
-    }
+    if (this.socket.readyState !== this.socket.OPEN) return false;
+    let message = JSON.stringify({command: command, payload: payload});
+    this.socket.send(message);
     return true;
   }
 

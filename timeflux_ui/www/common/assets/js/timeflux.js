@@ -516,27 +516,32 @@ function key(code) {
 /**
  * Resolve promise on event
  *
- * @param {string} name - event name
+ * @param {string|Array.<string>} events - event name(s)
  * @returns {Promise}
  */
-function flag(name) {
+function flag(events) {
+  if (!Array.isArray(events)) events = [events];
   return new Promise((resolve) => {
     const handler = (event) => {
-      document.removeEventListener(event.type, handler);
-      resolve(event.detail);
+      for (const name of events) {
+        document.removeEventListener(name, handler);
+      }
+      resolve(event);
     };
-    document.addEventListener(name, handler);
+    for (const name of events) {
+      document.addEventListener(name, handler);
+    }
   });
 }
 
 /**
  * Trigger an event
  *
- * @param {string} name - Event name
+ * @param {string} event - Event name
  * @param {object} [data] - Optional data
  */
-function trigger(name, data) {
-  document.dispatchEvent(new CustomEvent(name, { detail: data }));
+function trigger(event, data) {
+  document.dispatchEvent(new CustomEvent(event, { detail: data }));
 }
 
 /**
